@@ -1,1 +1,8 @@
 *.idea
+
+.env
+.secret
+secrets/
+
+jwt-private.pem
+jwt-public.pem
