@@ -42,3 +42,23 @@ def decode_jwt(
         algorithms=[algorithm],
     )
     return decoded
+
+
+# Максимальная длина для корректной работы это 72 символа
+def hash_password(
+        password: str
+) -> bytes:
+    salt: bytes = bcrypt.gensalt()
+    pwd_bytes: bytes = password.encode()
+    hashed_pwd: bytes = bcrypt.hashpw(password=pwd_bytes,
+                                      salt=salt)
+    return hashed_pwd.decode("utf-8")
+
+
+def check_password(
+        password: str,
+        hashed_password: bytes,
+) -> bool:
+    result: bool = bcrypt.checkpw(password=password.encode(),
+                                  hashed_password=hashed_password)
+    return result
