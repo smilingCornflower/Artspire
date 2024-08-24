@@ -78,3 +78,25 @@ async def create_user_in_db(user: UserCreateSchema) -> UserOrm:
             return new_user
 
 
+async def validate_auth_data(username: str, password: str) -> UserReadSchema:
+    async with db_manager.session_factory() as session:
+        try:
+            user: UserOrm = await get_user_by_username(username=username)
+        except UserNotFoundSQLError as err:
+            raise UnauthorizedHTTPError
+
+        correct_hashed_password: str = user.hashed_password
+        is_correct_password: bool = check_password(
+            password=password,
+            hashed_password=correct_hashed_password
+        )
+        if not is_correct_password:
+            raise UnauthorizedHTTPError
+
+        user_schema: UserReadSchema = UserReadSchema(
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            profile_image=user.profile_image,
+        )
+        return user_schema
