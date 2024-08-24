@@ -1,6 +1,6 @@
 from sqlalchemy import select
 
-from schemas import UserCreateSchema
+from schemas import UserCreateSchema, UserReadSchema
 from models import UserOrm
 from database import db_manager
 from config import settings
@@ -8,13 +8,19 @@ from exc import (
     UsernameAlreadyExistHTTPError,
     EmailAlreadyExistsHTTPError,
     WeakPasswordHTTPError,
+    UnauthorizedHTTPError,
+    UserNotFoundSQLError
 )
-from utils import hash_password
+from utils import hash_password, check_password
 
 from loguru import logger
 
 # Annotations
-from sqlalchemy import Select
+from sqlalchemy import (
+    Select,
+    ChunkedIteratorResult
+)
+from sqlalchemy.orm import InstrumentedAttribute
 
 logger.add(settings.logs_path,
            format="{time:YYYY-MM-DD HH:mm:ss} | {level} | [{file} | {function} | {line}] \n \t {message}",
@@ -25,13 +31,24 @@ logger.add(settings.logs_path,
 
 async def check_user_with_field_exists(field_name: str, value: str) -> bool:
     async with db_manager.session_factory() as session:
-        column = getattr(UserOrm, field_name)
+        column: InstrumentedAttribute = getattr(UserOrm, field_name)
         if column is None:
             raise ValueError(f"Invalid field name: {field_name}")
-        stmt = select(UserOrm).where(column == value)
-        result = await session.execute(stmt)
-        result_user = result.scalars().first()
+        stmt: Select = select(UserOrm).where(column == value)
+        result: ChunkedIteratorResult = await session.execute(stmt)
+        result_user: UserOrm = result.scalars().first()
         return bool(result_user)
+
+
+async def get_user_by_username(username: str) -> UserOrm:
+    async with db_manager.session_factory() as session:
+        stmt: Select = select(UserOrm).where(UserOrm.username == username)
+        result: ChunkedIteratorResult = await session.execute(stmt)
+
+        result_user: UserOrm = result.scalars().first()
+        if not result_user:
+            raise UserNotFoundSQLError
+        return result_user
 
 
 async def create_user_in_db(user: UserCreateSchema) -> UserOrm:
@@ -59,3 +76,5 @@ async def create_user_in_db(user: UserCreateSchema) -> UserOrm:
             )
             session.add(new_user)
             return new_user
+
+
