@@ -15,3 +15,8 @@ class UserReadSchema(BaseModel):
     email: EmailStr
     profile_image: str | None
 
+
+class TokenInfoSchema(BaseModel):
+    access_token: str
+    token_type: str
+
