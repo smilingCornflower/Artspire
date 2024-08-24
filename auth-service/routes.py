@@ -1,18 +1,20 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Form, HTTPException
 from fastapi.responses import JSONResponse
 
 from database import db_manager
 from models import UserOrm
-from schemas import UserCreateSchema
-from service import create_user_in_db
+from schemas import UserCreateSchema, UserReadSchema, TokenInfoSchema
+from service import create_user_in_db, validate_auth_data
 from config import settings
 
 from exc import (
-    UsernameAlreadyExistError,
+    UsernameAlreadyExistHTTPError,
     EmailAlreadyExistsHTTPError,
     WeakPasswordHTTPError,
     InterServerHTTPError,
+    UnauthorizedHTTPError,
 )
+from utils import encode_jwt
 
 from loguru import logger
 
@@ -29,15 +31,14 @@ router = APIRouter(
 
 
 @router.post("/register")
+@logger.catch(exclude=HTTPException, reraise=True)
 async def create_new_user(
         user: UserCreateSchema
 ) -> JSONResponse:
     try:
-        logger.debug(f"Input user: {repr(user)}")
         new_user: UserOrm = await create_user_in_db(user=user)
-        logger.debug(f"new_user: {repr(new_user)}")
 
-    except (UsernameAlreadyExistError, EmailAlreadyExistsHTTPError, WeakPasswordHTTPError) as err:
+    except (UsernameAlreadyExistHTTPError, EmailAlreadyExistsHTTPError, WeakPasswordHTTPError) as err:
         raise err
     except ValueError as err:
         raise InterServerHTTPError
@@ -45,7 +46,29 @@ async def create_new_user(
     return JSONResponse(content=f"User created successfully")
 
 
-@router.post("/login")
+@router.post("/login", response_model=TokenInfoSchema)
+@logger.catch(exclude=HTTPException, reraise=True)
 async def auth_user_jwt(
+        username: str = Form(),
+        password: str = Form(),
+) -> TokenInfoSchema:
+    try:
+        user_schema: UserReadSchema = await validate_auth_data(username=username, password=password)
+    except UnauthorizedHTTPError as err:
+        raise err
 
-):
+    jwt_payload: dict = {
+        "sub": user_schema.id,
+        "username": user_schema.username,
+        "email": user_schema.email,
+        "profile_image": user_schema.profile_image,
+    }
+    jwt_token: str = encode_jwt(payload=jwt_payload)
+
+    token_info: TokenInfoSchema = TokenInfoSchema(
+        access_token=jwt_token,
+        token_type="Bearer"
+    )
+    return token_info
+
+
