@@ -11,6 +11,7 @@ from exc import (
     UsernameAlreadyExistError,
     EmailAlreadyExistsHTTPError,
     WeakPasswordHTTPError,
+    InterServerHTTPError,
 )
 
 from loguru import logger
@@ -21,11 +22,11 @@ logger.add(settings.logs_path,
            rotation="10 MB",
            compression="zip")
 
-
 router = APIRouter(
     prefix="/auth",
     tags=["Auth"],
 )
+
 
 @router.post("/register")
 async def create_new_user(
@@ -38,4 +39,13 @@ async def create_new_user(
 
     except (UsernameAlreadyExistError, EmailAlreadyExistsHTTPError, WeakPasswordHTTPError) as err:
         raise err
+    except ValueError as err:
+        raise InterServerHTTPError
+
     return JSONResponse(content=f"User created successfully")
+
+
+@router.post("/login")
+async def auth_user_jwt(
+
+):
