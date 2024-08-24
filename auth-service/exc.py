@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status
+from sqlalchemy.exc import SQLAlchemyError
 
 
 class UsernameAlreadyExistHTTPError(HTTPException):
@@ -30,3 +31,8 @@ class UnauthorizedHTTPError(HTTPException):
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password")
+
+
+class UserNotFoundSQLError(SQLAlchemyError):
+    def __init__(self, message: str = "User not found in the database"):
+        super().__init__(message=message)
