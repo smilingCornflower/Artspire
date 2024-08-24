@@ -4,7 +4,11 @@ from schemas import UserCreateSchema
 from models import UserOrm
 from database import db_manager
 from config import settings
-from exc import UsernameAlreadyExistError, EamilAlreadyExistsError
+from exc import (
+    UsernameAlreadyExistHTTPError,
+    EmailAlreadyExistsHTTPError,
+    WeakPasswordHTTPError,
+)
 from utils import hash_password
 
 from loguru import logger
@@ -30,7 +34,7 @@ async def check_user_with_field_exists(field_name: str, value: str) -> bool:
         return bool(result_user)
 
 
-async def create_user_in_db(user):
+async def create_user_in_db(user: UserCreateSchema) -> UserOrm:
     async with db_manager.session_factory() as session:
         async with session.begin():
             username_exists: bool = await check_user_with_field_exists(field_name="username",
@@ -38,12 +42,12 @@ async def create_user_in_db(user):
             email_exists: bool = await check_user_with_field_exists(field_name="email",
                                                                     value=user.email)
             if username_exists:
-                raise UsernameAlreadyExistError
+                raise UsernameAlreadyExistHTTPError
             elif email_exists:
-                raise EamilAlreadyExistsError
+                raise EmailAlreadyExistsHTTPError
 
-            logger.debug(f"result_user: {result_user}")
-            logger.debug(f"user: {user}")
+            if len(user.password) < 6:
+                raise WeakPasswordHTTPError(detail="Password must be at least 6 characters long.")
 
             hashed_password = hash_password(password=user.password)
 
@@ -53,6 +57,5 @@ async def create_user_in_db(user):
                 hashed_password=hashed_password,
                 role_id=1
             )
-            logger.debug(f"new_user: {new_user}")
             session.add(new_user)
             return new_user
