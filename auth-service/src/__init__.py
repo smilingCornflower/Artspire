@@ -6,3 +6,5 @@ from . import repositories
 from . import schemas
 from . import services
 from . import utils
+
+from .database.base import Base
