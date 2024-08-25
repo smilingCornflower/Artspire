@@ -88,3 +88,10 @@ class UserService:
 
         return token_data
 
+    # TODO: Make one function for token creation
+    async def create_token_for_user_by_id(self, user_id: int, include_refresh: bool) -> TokenInfoSchema:
+        user_by_id: list[UserEntity] = await self.user_repo.find_all({"id": user_id})
+        result_token = create_token_for_user(
+            user=user_by_id[0],
+            include_refresh=include_refresh)
+        return result_token
