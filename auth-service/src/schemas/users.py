@@ -9,16 +9,15 @@ class UserCreateSchema(BaseModel):
     password: str
 
 
-class UserReadSchema(BaseModel):
-    id: int
+class UserLoginSchema(BaseModel):
     username: str
-    email: EmailStr
-    profile_image: str | None
+    password: str
 
 
 class UserEntity(BaseModel):
     id: int
     username: str
+    hashed_password: str
     email: EmailStr
     profile_image: str | None
 
