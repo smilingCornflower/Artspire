@@ -1,22 +1,13 @@
 from abc import ABC, abstractmethod
 from sqlalchemy import insert, select, and_
 from database.db import db_manager
-from config import settings
+from config import settings, logger
 from schemas.users import UserEntity
 
 # Annotation
 from sqlalchemy import Select, Insert, ChunkedIteratorResult
 from sqlalchemy.sql.expression import BinaryExpression
 from sqlalchemy.orm import DeclarativeMeta
-
-# Logging
-from loguru import logger
-
-logger.add(settings.logs_path,
-           format="{time:YYYY-MM-DD HH:mm:ss} | {level} | [{file} | {function} | {line}] \n \t {message}",
-           level="DEBUG",
-           rotation="10 MB",
-           compression="zip")
 
 
 class AbstractRepository(ABC):
