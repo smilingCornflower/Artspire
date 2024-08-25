@@ -14,6 +14,13 @@ class UserLoginSchema(BaseModel):
     password: str
 
 
+class UserReadSchema(BaseModel):
+    id: int
+    username: str
+    email: EmailStr
+    profile_image: str | None
+
+
 class UserEntity(BaseModel):
     id: int
     username: str
