@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel
 from pathlib import Path
+from loguru import logger
 
 auth_dir: Path = Path(__file__).parent.parent
 env_file: Path = auth_dir / "secrets/.env"
@@ -30,6 +31,7 @@ class Settings(BaseSettings):
     jwt_private_key_path: Path = auth_dir / "secrets/jwt-private.pem"
     jwt_public_key_path: Path = auth_dir / "secrets/jwt-public.pem"
     jwt_access_token_expire_minutes: int = 30
+    jwt_refresh_token_expire_minutes: int = 30 * 24 * 60
 
     logs_path: Path = auth_dir / "logs/debug.log"
 
@@ -43,3 +45,9 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+logger.add(settings.logs_path,
+           format="{time:YYYY-MM-DD HH:mm:ss} | {level} | [{file} | {function} | {line}] \n\t{message}",
+           level="DEBUG",
+           rotation="10 MB",
+           compression="zip")
