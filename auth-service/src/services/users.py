@@ -50,9 +50,6 @@ class UserService:
         if user_by_username:
             raise UsernameAlreadyExistHTTPException
 
-        if not user_by_username[0].is_active:
-            raise UserNotActiveHTTPException
-
         user_by_email = await self.user_repo.find_all(filter_by={"email": user_create_data.email})
         if user_by_email:
             raise EmailAlreadyExistsHTTPException
@@ -76,6 +73,9 @@ class UserService:
 
         if not user_by_username:
             raise UnauthorizedHTTPException
+
+        if not user_by_username[0].is_active:
+            raise UserNotActiveHTTPException
 
         user_entity: UserEntity = user_by_username[0]
         correct_password: str = user_entity.hashed_password
