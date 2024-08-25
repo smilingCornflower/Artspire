@@ -36,6 +36,7 @@ class UserOrm(Base):
         user_entity = UserEntity(
             id=self.id,
             username=self.username,
+            hashed_password=self.hashed_password,
             email=self.email,
             profile_image=self.profile_image,
             role_id=self.is_active,
