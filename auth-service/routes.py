@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Form, HTTPException
 from fastapi.responses import JSONResponse
 
-from database import db_manager
 from models import UserOrm
 from schemas import UserCreateSchema, UserReadSchema, TokenInfoSchema
 from service import create_user_in_db, validate_auth_data
