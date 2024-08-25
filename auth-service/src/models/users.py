@@ -6,10 +6,9 @@ from sqlalchemy import (
     String, ForeignKey, DateTime, func
 )
 from sqlalchemy.orm import relationship
-
-from roles import RoleOrm
-
 from schemas.users import UserEntity
+from datetime import datetime
+from typing import TYPE_CHECKING
 
 
 class UserOrm(Base):
@@ -20,7 +19,7 @@ class UserOrm(Base):
     username: M[str] = mc(String(length=50), unique=True, nullable=False)
     email: M[str] = mc(String(length=255), unique=True, nullable=False)
     hashed_password: M[str] = mc(String(length=64), unique=False, nullable=False)
-    role_id: M[int] = mc(ForeignKey("roles.id"), default=1, server_default=1, nullable=False)
+    role_id: M[int] = mc(ForeignKey("roles.id"), default=1, nullable=False)
 
     is_active: M[bool] = mc(default=True, nullable=False)
     is_verified: M[bool] = mc(default=False, nullable=False)
