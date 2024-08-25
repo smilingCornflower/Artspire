@@ -34,7 +34,7 @@ class DatabaseManager:
         )
 
     @property
-    def session_factory(self) -> async_sessionmaker:
+    def async_session_maker(self) -> async_sessionmaker:
         async_session_factory = async_sessionmaker(
             bind=self.engine,
             autoflush=False,
