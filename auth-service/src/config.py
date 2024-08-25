@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel
 from pathlib import Path
 
-auth_dir: Path = Path(__file__).parent
+auth_dir: Path = Path(__file__).parent.parent
 env_file: Path = auth_dir / "secrets/.env"
 
 
