@@ -3,7 +3,6 @@ from sqlalchemy.orm import Mapped as M
 from sqlalchemy.orm import mapped_column as mc
 from sqlalchemy import String
 from sqlalchemy.orm import relationship
-from users import UserOrm
 
 
 class RoleOrm(Base):
