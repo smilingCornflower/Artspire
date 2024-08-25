@@ -1,6 +1,5 @@
 import jwt
-
-import jwt_utils
+from jwt.exceptions import PyJWTError, ExpiredSignatureError
 from config import settings
 from datetime import datetime, timedelta, timezone
 from copy import deepcopy
@@ -39,11 +38,16 @@ def decode_jwt(
         public_key: str = settings.jwt_public_key_path.read_text(),
         algorithm: str = "RS256",
 ) -> Any:
-    decoded: Any = jwt.decode(
-        jwt=token,
-        key=public_key,
-        algorithms=[algorithm],
-    )
+    try:
+        decoded: Any = jwt.decode(
+            jwt=token,
+            key=public_key,
+            algorithms=[algorithm],
+        )
+    except ExpiredSignatureError as err:
+        raise err
+    except PyJWTError as err:
+        raise err
     return decoded
 
 
