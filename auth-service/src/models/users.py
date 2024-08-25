@@ -1,27 +1,13 @@
-from sqlalchemy.orm import DeclarativeBase, relationship
+from database.base import Base
 from sqlalchemy.orm import Mapped as M
 from sqlalchemy.orm import mapped_column as mc
 
 from sqlalchemy import (
-    MetaData, String, DateTime, ForeignKey, func
+    String, ForeignKey, DateTime, func
 )
-from config import settings
-import datetime
+from sqlalchemy.orm import relationship
 
-
-class Base(DeclarativeBase):
-    metadata = MetaData(
-        naming_convention=settings.naming_convention,
-    )
-
-
-class RoleOrm(Base):
-    __tablename__ = "roles"
-
-    id: M[int] = mc(primary_key=True)
-    name: M[str] = mc(String(length=50), unique=True, nullable=False)
-
-    users = relationship("UserOrm", back_populates="role")
+from roles import RoleOrm
 
 
 class UserOrm(Base):
