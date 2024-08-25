@@ -1,7 +1,9 @@
 import jwt
 from config import settings
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from copy import deepcopy
+
+from typing import Any
 
 
 def encode_jwt(
