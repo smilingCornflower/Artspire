@@ -1,5 +1,5 @@
 from repositories.repository import AbstractRepository
-from config import settings
+from config import settings, logger
 from schemas.users import (
     UserCreateSchema,
     UserLoginSchema,
@@ -7,7 +7,7 @@ from schemas.users import (
 )
 from schemas.tokens import TokenInfoSchema
 from utils.password import hash_password, check_password
-from utils.jwt import encode_jwt
+from utils.jwt_utils import create_access_jwt, create_refresh_jwt
 
 from exceptions.http import (
     UsernameAlreadyExistHTTPException,
@@ -17,32 +17,32 @@ from exceptions.http import (
     UserNotActiveHTTPException,
 )
 
-from loguru import logger
 
-logger.add(settings.logs_path,
-           format="{time:YYYY-MM-DD HH:mm:ss} | {level} | [{file} | {function} | {line}] \n \t {message}",
-           level="DEBUG",
-           rotation="10 MB",
-           compression="zip")
+def create_token_for_user(user: UserEntity, include_refresh: bool = True) -> TokenInfoSchema:
+    access_payload: dict = {
+        "sub": user.id,
+        "username": user.username,
+        "email": user.email,
+        "profile_image": user.profile_image
+    }
+    refresh_payload: dict = {
+        "sub": user.id,
+    }
+
+    access_token: str = create_access_jwt(token_data=access_payload)
+    refresh_token: str = create_refresh_jwt(token_data=refresh_payload)
+
+    if include_refresh:
+        token_info: TokenInfoSchema = TokenInfoSchema(access_token=access_token,
+                                                      refresh_token=refresh_token)
+    else:
+        token_info: TokenInfoSchema = TokenInfoSchema(access_token=access_token)
+    return token_info
 
 
 class UserService:
     def __init__(self, user_repo: AbstractRepository):
         self.user_repo = user_repo
-
-    def _create_access_token(self, user: UserEntity) -> TokenInfoSchema:
-        to_jwt_payload: dict = {
-            "sub": user.id,
-            "username": user.username,
-            "email": user.email,
-            "profile_image": user.profile_image,
-        }
-        encoded: str = encode_jwt(payload=to_jwt_payload)
-        access_token: TokenInfoSchema = TokenInfoSchema(
-            access_token=encoded,
-            token_type="Bearer"
-        )
-        return access_token
 
     async def add_user(self, user_create_data: UserCreateSchema) -> int:
         user_by_username: list[UserEntity] = await self.user_repo.find_all(
@@ -84,6 +84,7 @@ class UserService:
         if not check_password_result:
             raise UnauthorizedHTTPException
 
-        token_data: TokenInfoSchema = self._create_access_token(user=user_entity)
+        token_data: TokenInfoSchema = create_token_for_user(user=user_entity)
 
         return token_data
+
