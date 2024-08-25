@@ -1,7 +1,8 @@
 from pydantic import BaseModel
 
 
-class AccessTokenInfoSchema(BaseModel):
+class TokenInfoSchema(BaseModel):
     access_token: str
-    token_type: str
+    refresh_token: str
+    token_type: str = "Bearer"
 

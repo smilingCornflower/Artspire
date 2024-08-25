@@ -3,7 +3,7 @@ from schemas.users import (
     UserCreateSchema,
     UserLoginSchema,
 )
-from schemas.tokens import AccessTokenInfoSchema
+from schemas.tokens import TokenInfoSchema
 from .dependencies import get_user_service
 
 router = APIRouter(
@@ -25,6 +25,6 @@ async def register_user(
 async def login_user(
         user_login_data: UserLoginSchema,
         user_service=Depends(get_user_service)
-) -> AccessTokenInfoSchema:
-    token_data: AccessTokenInfoSchema = await user_service.validate_user(user_login_data)
+) -> TokenInfoSchema:
+    token_data: TokenInfoSchema = await user_service.validate_user(user_login_data)
     return token_data

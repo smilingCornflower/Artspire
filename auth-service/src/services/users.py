@@ -5,7 +5,7 @@ from schemas.users import (
     UserLoginSchema,
     UserEntity,
 )
-from schemas.tokens import AccessTokenInfoSchema
+from schemas.tokens import TokenInfoSchema
 from utils.password import hash_password, check_password
 from utils.jwt import encode_jwt
 
@@ -30,7 +30,7 @@ class UserService:
     def __init__(self, user_repo: AbstractRepository):
         self.user_repo = user_repo
 
-    def _create_access_token(self, user: UserEntity) -> AccessTokenInfoSchema:
+    def _create_access_token(self, user: UserEntity) -> TokenInfoSchema:
         to_jwt_payload: dict = {
             "sub": user.id,
             "username": user.username,
@@ -38,7 +38,7 @@ class UserService:
             "profile_image": user.profile_image,
         }
         encoded: str = encode_jwt(payload=to_jwt_payload)
-        access_token: AccessTokenInfoSchema = AccessTokenInfoSchema(
+        access_token: TokenInfoSchema = TokenInfoSchema(
             access_token=encoded,
             token_type="Bearer"
         )
@@ -68,7 +68,7 @@ class UserService:
 
         return new_user_id
 
-    async def validate_user(self, user: UserLoginSchema) -> AccessTokenInfoSchema:
+    async def validate_user(self, user: UserLoginSchema) -> TokenInfoSchema:
         user_by_username: list[UserEntity] = await self.user_repo.find_all({"username": user.username})
 
         if not user_by_username:
@@ -84,6 +84,6 @@ class UserService:
         if not check_password_result:
             raise UnauthorizedHTTPException
 
-        token_data: AccessTokenInfoSchema = self._create_access_token(user=user_entity)
+        token_data: TokenInfoSchema = self._create_access_token(user=user_entity)
 
         return token_data
