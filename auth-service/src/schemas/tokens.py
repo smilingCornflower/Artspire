@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class TokenInfoSchema(BaseModel):
+class AccessTokenInfoSchema(BaseModel):
     access_token: str
     token_type: str
 

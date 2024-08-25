@@ -5,7 +5,7 @@ from schemas.users import (
     UserLoginSchema,
     UserEntity,
 )
-from schemas.tokens import TokenInfoSchema
+from schemas.tokens import AccessTokenInfoSchema
 from utils.password import hash_password, check_password
 from utils.jwt import encode_jwt
 
@@ -29,6 +29,20 @@ logger.add(settings.logs_path,
 class UserService:
     def __init__(self, user_repo: AbstractRepository):
         self.user_repo = user_repo
+
+    def _create_access_token(self, user: UserEntity) -> AccessTokenInfoSchema:
+        to_jwt_payload: dict = {
+            "sub": user.id,
+            "username": user.username,
+            "email": user.email,
+            "profile_image": user.profile_image,
+        }
+        encoded: str = encode_jwt(payload=to_jwt_payload)
+        access_token: AccessTokenInfoSchema = AccessTokenInfoSchema(
+            access_token=encoded,
+            token_type="Bearer"
+        )
+        return access_token
 
     async def add_user(self, user_create_data: UserCreateSchema) -> int:
         user_by_username: list[UserEntity] = await self.user_repo.find_all(
@@ -57,7 +71,7 @@ class UserService:
 
         return new_user_id
 
-    async def validate_user(self, user: UserLoginSchema) -> TokenInfoSchema:
+    async def validate_user(self, user: UserLoginSchema) -> AccessTokenInfoSchema:
         user_by_username: list[UserEntity] = await self.user_repo.find_all({"username": user.username})
 
         if not user_by_username:
@@ -70,15 +84,6 @@ class UserService:
         if not check_password_result:
             raise UnauthorizedHTTPException
 
-        to_jwt_payload: dict = {
-            "sub": user_entity.id,
-            "username": user_entity.username,
-            "email": user_entity.email,
-            "profile_image": user_entity.profile_image,
-        }
-        encoded: str = encode_jwt(payload=to_jwt_payload)
-        token_data: TokenInfoSchema = TokenInfoSchema(
-            access_token=encoded,
-            token_type="Bearer"
-        )
+        token_data: AccessTokenInfoSchema = self._create_access_token(user=user_entity)
+
         return token_data
