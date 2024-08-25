@@ -1,19 +1,9 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from config import settings
+from config import settings, logger
 
 # Annotation
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from typing import AsyncGenerator
-
-from loguru import logger
-
-
-logger.add(settings.logs_path,
-           format="{time:YYYY-MM-DD HH:mm:ss} | {level} | [{file} | {function} | {line}] \n \t {message}",
-           level="DEBUG",
-           rotation="10 MB",
-           compression="zip"
-           )
 
 
 class DatabaseManager:
