@@ -37,3 +37,18 @@ class UnauthorizedHTTPException(HTTPException):
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password")
+
+
+class InvalidTokenHTTPException(HTTPException):
+    def __init__(self, status_code: int = 401, detail: str = "Invalid token received"):
+        super().__init__(
+            status_code=status_code,
+            detail=detail,
+        )
+
+
+class InvalidTokenTypeHTTPException(InvalidTokenHTTPException):
+    def __init__(self, received_type: str, expected_type: str):
+        super().__init__(
+            detail=f"Invalid token type: {received_type}, expected: {expected_type}"
+        )
