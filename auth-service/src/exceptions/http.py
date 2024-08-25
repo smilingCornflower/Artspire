@@ -26,6 +26,12 @@ class InterServerHTTPException(HTTPException):
                          detail="Something went wrong on server")
 
 
+class UserNotActiveHTTPException(HTTPException):
+    def __init__(self):
+        super().__init__(status_code=status.HTTP_403_FORBIDDEN,
+                         detail="User is not active")
+
+
 class UnauthorizedHTTPException(HTTPException):
     def __init__(self):
         super().__init__(

@@ -14,6 +14,7 @@ from exceptions.http import (
     EmailAlreadyExistsHTTPException,
     WeakPasswordHTTPException,
     UnauthorizedHTTPException,
+    UserNotActiveHTTPException,
 )
 
 from loguru import logger
@@ -30,9 +31,13 @@ class UserService:
         self.user_repo = user_repo
 
     async def add_user(self, user_create_data: UserCreateSchema) -> int:
-        user_by_username = await self.user_repo.find_all(filter_by={"username": user_create_data.username})
+        user_by_username: list[UserEntity] = await self.user_repo.find_all(
+            filter_by={"username": user_create_data.username})
         if user_by_username:
             raise UsernameAlreadyExistHTTPException
+
+        if not user_by_username[0].is_active:
+            raise UserNotActiveHTTPException
 
         user_by_email = await self.user_repo.find_all(filter_by={"email": user_create_data.email})
         if user_by_email:
