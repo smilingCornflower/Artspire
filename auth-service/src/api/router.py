@@ -33,6 +33,16 @@ async def login_user(
     return token_data
 
 
+@router.post("/refresh")
+async def refresh_jwt(
+        decoded_refresh: dict = Depends(get_decoded_refresh_token),
+        user_service: UserService = Depends(get_user_service)
+) -> TokenInfoSchema:
+    logger.debug(f"decoded_refresh: {decoded_refresh}")
+    user_id: int = decoded_refresh["sub"]
+    new_access_token: TokenInfoSchema = await user_service.create_token_for_user_by_id(user_id=user_id, include_refresh=False)
+    return new_access_token
+
 
 @router.get("/me")
 async def current_user_info(
