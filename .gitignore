@@ -1,3 +1,10 @@
 .idea
+logs
 secrets
+
+*.log
+*.yaml
+*.yml
+docker-compose.yaml
+docker-compose.txt
 venv
