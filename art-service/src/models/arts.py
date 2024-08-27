@@ -17,7 +17,10 @@ class ArtOrm(Base):
 
     id: M[int] = mc(primary_key=True)
     user_id: M[int]
-    url: M[str] = mc(String(length=512), unique=True, index=True, nullable=False)
+    blob_name: M[str] = mc(String(length=128), unique=True, nullable=False)
+    url: M[str] = mc(String(length=2048), unique=True, index=True, nullable=False)
+    url_generated_at: M[datetime]
+
     title: M[str] = mc(String(length=256), nullable=True)
     likes_count: M[int] = mc(default=0)
 
