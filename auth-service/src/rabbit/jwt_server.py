@@ -1,5 +1,5 @@
 from .rpc_server import RmqRpcServer
-from utils.jwt_utils import decode_jwt
+from utils.jwt_utils import decode_jwt, ACCESS_TOKEN_TYPE
 from jwt.exceptions import PyJWTError
 from aio_pika.exceptions import AMQPException
 import json
@@ -19,12 +19,14 @@ class JwtRpcServer(RmqRpcServer):
         try:
             logger.debug(f"Decoding JWT: {message_body}")
             decoded: dict = decode_jwt(message_body)
+            if decoded["type"] != ACCESS_TOKEN_TYPE:
+                raise ValueError(f"Incorrect token type, expected: {ACCESS_TOKEN_TYPE} received: {decoded['type']}")
             response: dict = {
                 "is_valid": True,
                 "decoded": decoded,
             }
             logger.info(f"JWT decoded successfully: {decoded}")
-        except PyJWTError as err:
+        except (PyJWTError, ValueError) as err:
             logger.error(f"JWT decoding failed: {err}", exc_info=True)
             response: dict = {
                 "is_valid": False,
