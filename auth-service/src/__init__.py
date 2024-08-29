@@ -6,5 +6,6 @@ from . import repositories
 from . import schemas
 from . import services
 from . import utils
+from . import rabbit
 
 from .database.base import Base
