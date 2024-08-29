@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from sqlalchemy import (
         Insert, Select, ChunkedIteratorResult
     )
+    from schemas.arts import ArtCreateSchema
     from sqlalchemy.orm import DeclarativeMeta
     from sqlalchemy.sql.expression import BinaryExpression
 
@@ -26,7 +27,7 @@ class AbstractRepository(ABC):
 class SQLAlchemyRepository(AbstractRepository):
     model = None
 
-    async def add_one(self, data: dict) -> int:
+    async def add_one(self, data: "ArtCreateSchema") -> int:
         async with db_manager.async_session_maker() as session:
             async with session.begin():
                 logger.warning(f"Started inserting in {self.model}")
