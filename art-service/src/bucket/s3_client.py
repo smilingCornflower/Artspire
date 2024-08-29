@@ -19,7 +19,7 @@ class S3Client:
                  bucket_name: str,
                  ):
         self.client: Client = Client()
-        logger.info("S3 Client initialized")
+        logger.info("bucket Client initialized")
         try:
             self.bucket: Bucket = self.client.get_bucket(bucket_or_name=bucket_name)
         except GoogleCloudError as err:
@@ -30,18 +30,18 @@ class S3Client:
                     file_obj: "BinaryIO",
                     blob_name: str) -> str:
         """
-        Upload a file to S3 and return the blob's name.
+        Upload a file to bucket and return the blob's name.
 
         :param file_obj: File object opened in binary mode.
-        :param blob_name: Name of the blob in S3.
+        :param blob_name: Name of the blob in bucket.
         :return: Name of the uploaded blob.
         """
-        logger.warning("Started uploading file into S3")
+        logger.warning("Started uploading file into bucket")
         try:
             blob: "Blob" = self.bucket.blob(blob_name=blob_name)
             blob.upload_from_file(file_obj=file_obj, rewind=True)
             logger.debug(f"blob: {blob}")
-            logger.info(f"Finished uploading file into S3")
+            logger.info(f"Finished uploading file into bucket")
             return blob.name
         except GoogleCloudError as err:
             logger.error(f"Cloud error during uploading: {err}")
@@ -49,9 +49,9 @@ class S3Client:
 
     def delete_file(self, blob_name: str) -> None:
         """
-        Delete a file from S3 by its blob name.
+        Delete a file from bucket by its blob name.
 
-        :param blob_name: Name of the blob in S3 to delete.
+        :param blob_name: Name of the blob in bucket to delete.
         """
         try:
             logger.warning(f"Started deleting blob: {blob_name}")
@@ -69,7 +69,9 @@ class S3Client:
         try:
             logger.warning(f"Started generating url, blob_name: {blob_name}")
             blob: Blob = self.bucket.blob(blob_name=blob_name)
-            result_url: str = blob.generate_signed_url(version="v4", expiration=timedelta(days=settings.s3.expiration_days))
+            result_url: str = blob.generate_signed_url(
+                version="v4", expiration=timedelta(days=settings.s3.expiration_days)
+            )
             logger.info(f"Finished generating url, result_url: {result_url}")
             return result_url
 
