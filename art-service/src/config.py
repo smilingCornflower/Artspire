@@ -1,10 +1,18 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import BaseModel
 from pathlib import Path
+
+import pika
 from loguru import logger
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 art_dir: Path = Path(__file__).parent.parent
 env_file: Path = art_dir / "secrets/.env"
+
+
+class BucketConfig(BaseModel):
+    credentials_path: Path = art_dir / "secrets/bucket-credentials.json"
+    bucket_name: str = "artspire-bucket"
+    expiration_days: int = 7
 
 
 class RMQConfig(BaseModel):
@@ -12,6 +20,7 @@ class RMQConfig(BaseModel):
     port: int = 5672
     user: str
     password: str
+    prefetch_count: int = 50
 
     def get_connection_url(self) -> str:
         return f"amqp://{self.user}:{self.password}@{self.host}:{self.port}/"
@@ -49,6 +58,7 @@ class DatabaseConfig(BaseModel):
         "pk": "pk_%(table_name)s"
     }
 
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=env_file,
@@ -59,6 +69,7 @@ class Settings(BaseSettings):
     db: DatabaseConfig
     rmq: RMQConfig
     log: LoggingConfig = LoggingConfig()
+    s3: BucketConfig = BucketConfig()
 
 
 settings = Settings()
