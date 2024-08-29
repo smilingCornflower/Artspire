@@ -1,17 +1,32 @@
+from pathlib import Path
+
+import pika
+from loguru import logger
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel
-from pathlib import Path
-from loguru import logger
 
 auth_dir: Path = Path(__file__).parent.parent
 env_file: Path = auth_dir / "secrets/.env"
+
+
+class RMQConfig(BaseModel):
+    user: str
+    password: str
+    host: str = "0.0.0.0"
+    port: int = 5672
+    prefetch_count: int = 50
+
+    def get_connection_url(self) -> str:
+        return f"amqp://{self.user}:{self.password}@{self.host}:{self.port}/"
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=env_file,
         case_sensitive=False,
+        env_nested_delimiter="__"
     )
+    rmq: RMQConfig
     db_user: str
     db_host: str
     db_port: str
