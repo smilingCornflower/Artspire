@@ -3,6 +3,7 @@ from sqlalchemy.orm import mapped_column as mc
 from sqlalchemy.orm import relationship
 from sqlalchemy import String, ForeignKey
 from database.base import Base
+from schemas.entities import TagEntity
 
 
 class TagOrm(Base):
@@ -12,3 +13,10 @@ class TagOrm(Base):
     name: M[str] = mc(String(255), unique=True, nullable=False)
 
     arts: M[int] = relationship("ArtOrm", secondary="arts_to_tags", back_populates="tags")
+
+    def to_entity(self) -> "TagEntity":
+        result: "TagEntity" = TagEntity(
+            id=self.id,
+            name=self.name,
+        )
+        return result
