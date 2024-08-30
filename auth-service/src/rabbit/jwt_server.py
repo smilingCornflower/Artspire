@@ -42,11 +42,11 @@ async def run_jwt_server() -> None:
         await jwt_server.connect()
         await jwt_server.process_messages()
     except AMQPException as err:
-        logger.critical(f"AMQP error: {err}", exc_info=True)
+        logger.critical(f"AMQP error: {err}")
         await jwt_server.cleanup()
     except PyJWTError as err:
-        logger.error(f"JWT error: {err}", exc_info=True)
+        logger.error(f"JWT error: {err}")
         await jwt_server.cleanup()
     except Exception as err:
-        logger.error(f"Unexpected error: {err}", exc_info=True)
+        logger.error(f"Unexpected error: {err}")
         await jwt_server.cleanup()
