@@ -7,3 +7,6 @@ app = FastAPI(
 )
 
 app.include_router(arts_router)
+
+if __name__ == "__main__":
+    uvicorn.run(app, port=8000)
