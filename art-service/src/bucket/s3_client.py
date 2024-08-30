@@ -28,7 +28,8 @@ class S3Client:
 
     def upload_file(self,
                     file_obj: "BinaryIO",
-                    blob_name: str) -> str:
+                    blob_name: str,
+                    ) -> str:
         """
         Upload a file to bucket and return the blob's name.
 
@@ -64,7 +65,11 @@ class S3Client:
 
     def create_url(self, blob_name: str) -> str:
         """
+        Generate a signed URL for a Google Cloud Storage blob.
 
+        Args: blob_name (str), the name of the blob for which to generate the URL.
+        Returns: String, the signed URL for accessing the blob.
+        Raises: GoogleCloudError, if an error occurs during URL generation.
         """
         try:
             logger.warning(f"Started generating url, blob_name: {blob_name}")
