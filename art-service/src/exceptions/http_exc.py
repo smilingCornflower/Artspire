@@ -31,3 +31,19 @@ class ForbiddenHTTPException(HTTPException):
             status_code=status.HTTP_403_FORBIDDEN,
             detail=detail,
         )
+
+
+class ArtNotFoundHTTPException(HTTPException):
+    def __init__(self, detail: str = "Art not found"):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=detail,
+        )
+
+
+class TagAlreadyExistsHTTPException(HTTPException):
+    def __init__(self, detail: str = "Tag already exists"):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=detail,
+        )
