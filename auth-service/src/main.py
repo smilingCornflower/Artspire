@@ -11,10 +11,9 @@ from config import logger
 
 @asynccontextmanager
 async def async_lifespan(app_name: FastAPI):
-    logger.info(f"{app_name} Started")
-    await jwt_server()
+    app.jwt_task = asyncio.create_task(jwt_server())
     yield
-
+    app.jwt_task.cancel()
 
 app = FastAPI(
     title="Artspire-Auth",
@@ -32,4 +31,5 @@ app.add_middleware(
 app.include_router(auth_router)
 
 if __name__ == "__main__":
-    uvicorn.run(app=app, port=8002, host="0.0.0.0")
+    logger.info(f"In __main__")
+    uvicorn.run(app=app, port=8001, host="0.0.0.0")
