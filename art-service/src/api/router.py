@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, UploadFile
 from fastapi.security.http import HTTPBearer
+from fastapi.responses import JSONResponse
 
 from services.tags import TagsService
 from schemas.arts import ArtUploadSchema
@@ -56,6 +57,16 @@ async def post_tag(
         user_data: "UserEntity" = Depends(get_user_data),
         tag_service: "TagsService" = Depends(get_tags_service)
 ) -> int:
+    """
+    Creates a new tag.
+
+    Requires the user to be a moderator (role_id = 2).
+
+    @param tag_name: The name of the tag to be created.
+    @param user_data: The user making the request, used to check authorization.
+    @param tag_service: Service for handling tag operations.
+    @return: The ID of the newly created tag.
+    """
     if user_data.role_id != 2:
         raise ForbiddenHTTPException
     new_tag_id: int = await tag_service.add_tag(tag_name)
@@ -66,5 +77,37 @@ async def post_tag(
 async def get_tags(
         tag_service: "TagsService" = Depends(get_tags_service)
 ) -> list:
+    """
+    Retrieves a list of all tags.
+
+    Fetches and returns all tags from the tag service.
+
+    @param tag_service: Service for tag operations.
+    @return: List of tag entities. Each tag entity is a dictionary with keys 'id' (int) and 'name' (str).
+    """
     all_tags: list["TagEntity"] = await tag_service.get_tags()
     return all_tags
+
+
+@router.delete("/tags")
+async def delete_tag(
+        tag_id: int,
+        user_data: "UserEntity" = Depends(get_user_data),
+        tag_service: "TagsService" = Depends(get_tags_service)
+) -> int:
+    """
+    Deletes a tag by ID.
+
+    Checks user permissions and deletes the tag if allowed. Returns 1 if successful, 0 if not found.
+    Raises Internal Server Error on failure.
+
+    @param tag_id: id of the tag to delete.
+    @param user_data: User information for permission checks.
+    @param tag_service: Service for tag operations.
+    @return: 1 if tag deleted, 0 if tag not found.
+    @raises ForbiddenHTTPException: If the user lacks permissions.
+    """
+    if user_data.role_id != 2:
+        raise ForbiddenHTTPException
+    tag_delete_result = await tag_service.delete_tag(tag_id)
+    return tag_delete_result

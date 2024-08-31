@@ -20,11 +20,17 @@ class TagsService:
         return new_tag_id
 
     async def delete_tag(self, tag_id: int) -> bool:
-        # TODO: Add try-except to raise HTTPException
-        tag_delete_result: bool = await self.tag_repo.delete_one(item_id=tag_id)
+        try:
+            tag_delete_result: bool = await self.tag_repo.delete_one(item_id=tag_id)
+        except SQLAlchemyError as err:
+            logger.error(f"Failed to delete tag with id {tag_id}: {err}")
+            raise InternalServerErrorHTTPException
         return tag_delete_result
 
     async def get_tags(self) -> list:
-        # TODO: Add try-except to raise HTTPException
-        all_tags: list = await self.tag_repo.find_all({})
+        try:
+            all_tags: list = await self.tag_repo.find_all({})
+        except SQLAlchemyError as err:
+            logger.error(f"Failed to get tags {err}")
+            raise InternalServerErrorHTTPException
         return all_tags
