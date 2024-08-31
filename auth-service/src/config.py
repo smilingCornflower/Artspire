@@ -12,7 +12,7 @@ env_file: Path = auth_dir / "secrets/.env"
 class RMQConfig(BaseModel):
     user: str
     password: str
-    host: str = "0.0.0.0"
+    host: str
     port: int = 5672
     prefetch_count: int = 50
 

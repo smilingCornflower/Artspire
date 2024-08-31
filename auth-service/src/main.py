@@ -13,6 +13,7 @@ from config import logger
 async def async_lifespan(app_name: FastAPI):
     logger.info(f"{app_name} Started")
     jwt_server_task = asyncio.create_task(run_jwt_server())
+
     yield
     jwt_server_task.cancel()
     try:
@@ -38,4 +39,4 @@ app.add_middleware(
 app.include_router(auth_router)
 
 if __name__ == "__main__":
-    uvicorn.run(app=app, port=8001)
+    uvicorn.run(app=app, port=8002, host="0.0.0.0")

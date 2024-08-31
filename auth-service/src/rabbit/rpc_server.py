@@ -24,16 +24,18 @@ class RmqRpcServer:
         self.queue: "AbstractQueue" = None
 
     async def connect(self):
-        try:
-            logger.info("Connecting to RabbitMQ...")
-            self.connection = await connect(url=settings.rmq.get_connection_url())
-            self.channel = await self.connection.channel()
-            self.exchange = self.channel.default_exchange
-            self.queue = await self.channel.declare_queue(name=self.queue_name)
-            logger.info("Connected to RabbitMQ and queue declared successfully.")
-        except AMQPException as err:
-            logger.critical(f"Critical error during RabbitMQ connection: {err}", exc_info=True)
-            raise
+        while True:
+            try:
+                logger.info("Connecting to RabbitMQ...")
+                self.connection = await connect(url=settings.rmq.get_connection_url())
+                self.channel = await self.connection.channel()
+                self.exchange = self.channel.default_exchange
+                self.queue = await self.channel.declare_queue(name=self.queue_name)
+                logger.info("Connected to RabbitMQ and queue declared successfully.")
+                break
+            except AMQPException as err:
+                logger.critical(f"Critical error during RabbitMQ connection: {err}", exc_info=True)
+                await asyncio.sleep(5)
 
     async def msg_handler(self, message_body: str) -> str:
         return message_body

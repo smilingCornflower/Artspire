@@ -23,7 +23,8 @@ def create_token_for_user(user: UserEntity, include_refresh: bool = True) -> Tok
         "sub": user.id,
         "username": user.username,
         "email": user.email,
-        "profile_image": user.profile_image
+        "profile_image": user.profile_image,
+        "role_id": user.role_id,
     }
     refresh_payload: dict = {
         "sub": user.id,

@@ -28,5 +28,5 @@ class UserEntity(BaseModel):
     email: EmailStr
     profile_image: str | None
 
-    role_id: bool
+    role_id: int
     is_active: bool
