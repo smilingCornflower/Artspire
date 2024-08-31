@@ -10,6 +10,7 @@ class UserEntity(BaseEntity):
     username: str
     email: EmailStr
     profile_image: str | None
+    role_id: int = 1
 
 
 class TagEntity(BaseEntity):
