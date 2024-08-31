@@ -23,3 +23,11 @@ class InternalServerErrorHTTPException(HTTPException):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=detail,
         )
+
+
+class ForbiddenHTTPException(HTTPException):
+    def __init__(self, detail: str = "Action forbidden: Moderators and Admins only"):
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=detail,
+        )
