@@ -13,7 +13,7 @@ async def async_lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Artspire-Arts",
-    lifespan=async_lifespan,
+    lifespan=async_lifespan,    # noqa
 )
 
 app.include_router(arts_router)
