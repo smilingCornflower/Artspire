@@ -1,10 +1,12 @@
-from database.db import db_manager
-from .repository import SQLAlchemyRepository
-from config import logger
+from typing import TYPE_CHECKING
+
 from sqlalchemy import insert
 from sqlalchemy.exc import SQLAlchemyError
-from typing import TYPE_CHECKING
+
+from config import logger
+from database.db import db_manager
 from models.art_to_tag import art_to_tag
+from .repository import SQLAlchemyRepository
 
 if TYPE_CHECKING:
     from sqlalchemy import Insert
@@ -17,7 +19,7 @@ class ArtToTagRepository(SQLAlchemyRepository):
         async with db_manager.async_session_maker() as session:
             async with session.begin():
                 logger.warning(f"Started inserting into model: {self.model}")
-                logger.debug(f"Model: {self.model} data to be inserted: {data}")
+                logger.debug(f"Model: {self.model}, data to be inserted: {data}")
                 try:
                     stmt: "Insert" = insert(self.model).values(**data)
                     logger.debug(f"SQL statement: {stmt}")

@@ -1,15 +1,16 @@
-from repositories.repository import SQLAlchemyRepository
-from .tags import TagRepository
-from models.arts import ArtOrm
-from .tags import TagRepository
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+
 from config import logger
 from database.db import db_manager
-from sqlalchemy.exc import SQLAlchemyError
-from schemas.entities import TagEntity
-from sqlalchemy import select
+from models.arts import ArtOrm
 from models.tags import TagOrm
-from .art_to_tag import ArtToTagRepository
+from repositories.repository import SQLAlchemyRepository
 from schemas.arts import ArtCreateSchema
+from schemas.entities import TagEntity
+
+from .art_to_tag import ArtToTagRepository
+from .tags import TagRepository
 
 
 class ArtRepository(SQLAlchemyRepository):
@@ -21,6 +22,7 @@ class ArtRepository(SQLAlchemyRepository):
 
         art_data: dict = art_data.to_dict()
         tag_names: list[str] = art_data.pop("tags", [])
+
         try:
             logger.info(f"Attempting to add new art with data: {art_data}")
             new_art_id: int = await self.add_one(art_data)
@@ -44,4 +46,5 @@ class ArtRepository(SQLAlchemyRepository):
             except SQLAlchemyError as err:
                 logger.error(f"Error adding tag '{tag_name}' to art ID {new_art_id}: {err}")
                 raise
+
         return new_art_id
