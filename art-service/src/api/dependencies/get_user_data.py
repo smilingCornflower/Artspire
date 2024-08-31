@@ -16,14 +16,17 @@ async def get_user_data(
 ) -> UserEntity:
     token: str = credentials.credentials
     logger.debug(f"Received token: {token}")
-    decoded: dict = await run_jwt_client(body=token)
-    if not decoded["is_valid"]:
+    jwt_response: dict = await run_jwt_client(body=token)
+    if not jwt_response["is_valid"]:
         raise UnauthorizedHTTPException
+    user_data: dict = jwt_response["decoded"]
+
     user_data: "UserEntity" = UserEntity(
-        id=decoded["decoded"]["sub"],
-        username=decoded["decoded"]["username"],
-        email=decoded["decoded"]["email"],
-        profile_image=decoded["decoded"]["profile_image"],
+        id=user_data["sub"],
+        username=user_data["username"],
+        email=user_data["email"],
+        profile_image=user_data["profile_image"],
+        role_id=user_data["role_id"],
     )
     logger.info(f"user_data: {user_data}")
     return user_data
