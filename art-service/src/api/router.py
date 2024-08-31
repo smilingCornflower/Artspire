@@ -23,12 +23,21 @@ from rabbit.jwt_client import run_jwt_client
 if TYPE_CHECKING:
     from fastapi.security.http import HTTPAuthorizationCredentials
     from services.arts import ArtsService
-    from schemas.entities import TagEntity
+    from schemas.entities import TagEntity, ArtEntity
 
 router = APIRouter(
     prefix="/arts",
     tags=["Arts"],
 )
+
+
+@router.get("")
+async def get_arts(
+        art_id: int | None = None,
+        art_service: "ArtsService" = Depends(get_arts_service),
+) -> list:
+    one_or_all_arts: "list[ArtEntity]" = await art_service.get_arts(art_id=art_id)
+    return one_or_all_arts
 
 
 @router.post("")
