@@ -1,7 +1,11 @@
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError
 
 from repositories.tags import TagRepository
-from exceptions.http_exc import InternalServerErrorHTTPException
+from exceptions.http_exc import (
+    InternalServerErrorHTTPException,
+    TagAlreadyExistsHTTPException,
+)
 from schemas.entities import TagEntity
 from config import logger
 
@@ -14,6 +18,9 @@ class TagsService:
         new_tag_data: dict = {"name": tag_name}
         try:
             new_tag_id: int = await self.tag_repo.add_one(data=new_tag_data)
+        except IntegrityError as err:
+            logger.error(f"Error: {err}")
+            raise TagAlreadyExistsHTTPException
         except SQLAlchemyError as err:
             logger.error(f"Failed to add tag '{tag_name}': {err}")
             raise InternalServerErrorHTTPException from err
@@ -21,7 +28,7 @@ class TagsService:
 
     async def delete_tag(self, tag_id: int) -> bool:
         try:
-            tag_delete_result: bool = await self.tag_repo.delete_one(item_id=tag_id)
+            tag_delete_result: bool = await self.tag_repo.delete_one(object_id=tag_id)
         except SQLAlchemyError as err:
             logger.error(f"Failed to delete tag with id {tag_id}: {err}")
             raise InternalServerErrorHTTPException
