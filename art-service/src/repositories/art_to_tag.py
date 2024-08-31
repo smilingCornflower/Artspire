@@ -1,13 +1,17 @@
+# Type hints
 from typing import TYPE_CHECKING
 
+# SQLAlchemy
 from sqlalchemy import insert
 from sqlalchemy.exc import SQLAlchemyError
 
+# Local
 from config import logger
 from database.db import db_manager
 from models.art_to_tag import art_to_tag
 from .repository import SQLAlchemyRepository
 
+# Type hints
 if TYPE_CHECKING:
     from sqlalchemy import Insert
 

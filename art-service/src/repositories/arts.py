@@ -1,6 +1,8 @@
+# SQLAlchemy
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
+# Local
 from config import logger
 from database.db import db_manager
 from models.arts import ArtOrm
