@@ -22,7 +22,7 @@ from rabbit.jwt_client import run_jwt_client
 if TYPE_CHECKING:
     from fastapi.security.http import HTTPAuthorizationCredentials
     from services.arts import ArtsService
-
+    from schemas.entities import TagEntity
 
 router = APIRouter(
     prefix="/arts",
@@ -60,3 +60,11 @@ async def post_tag(
         raise ForbiddenHTTPException
     new_tag_id: int = await tag_service.add_tag(tag_name)
     return new_tag_id
+
+
+@router.get("/tags")
+async def get_tags(
+        tag_service: "TagsService" = Depends(get_tags_service)
+) -> list:
+    all_tags: list["TagEntity"] = await tag_service.get_tags()
+    return all_tags
