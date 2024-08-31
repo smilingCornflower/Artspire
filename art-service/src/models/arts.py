@@ -10,6 +10,7 @@ from sqlalchemy import (
 )
 from database.base import Base
 from datetime import datetime
+from schemas.entities import ArtEntity
 
 
 class ArtOrm(Base):
@@ -29,4 +30,17 @@ class ArtOrm(Base):
     created_at: M[datetime] = mc(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+    def to_entity(self) -> "ArtEntity":
+        art_entity: "ArtEntity" = ArtEntity(
+            id=self.id,
+            user_id=self.user_id,
+            blob_name=self.blob_name,
+            url=self.url,
+            url_generated_at=self.url_generated_at,
+            title=self.title,
+            likes_count=self.likes_count,
+            created_at=self.created_at,
+        )
+        return art_entity
 
