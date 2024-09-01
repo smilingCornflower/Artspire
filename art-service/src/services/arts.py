@@ -25,6 +25,8 @@ if TYPE_CHECKING:
     from fastapi import UploadFile
     from typing import BinaryIO
 
+UNDELETED_BLOB_NAMES_FILE: str = "undeleted_blob_names.txt"
+
 
 class ArtsService:
     """
@@ -179,24 +181,40 @@ class ArtsService:
         """
         Deletes an art from the repository by its ID.
 
-        Attempts to delete the specified art. If the art is not found or has already been deleted,
-        returns `False`. If the deletion fails due to a database error, an exception is raised.
+        Attempts to delete the specified art from the repository first. If the deletion from the repository is successful,
+        it then attempts to delete the art from cloud storage. If the cloud deletion fails, the blob name is recorded
+        in a file for subsequent retry. If the art is not found or has already been deleted, returns `False`.
 
         @param art_id: The ID of the art to delete.
-        @return: `True` if the art was successfully deleted; `False` if it was not found or already deleted.
-        @raises InternalServerErrorHTTPException: If a database error occurs during deletion.
+        @return: `True` if the art was successfully deleted from both the repository and cloud storage; `False` if it was not found or already deleted.
+        @raises InternalServerErrorHTTPException: If a database error occurs during deletion from the repository.
         """
+        logger.info(f"Attempting to delete art with id: {art_id}")
         try:
-            logger.info(f"Attempting to delete art with id: {art_id}")
-            art_delete_result: bool = await self.art_repo.delete_one(object_id=art_id)
+            # noinspection PyTypeChecker
+            art_entities: list["ArtEntity"] = await self.art_repo.find_all({"id": art_id})
+        except SQLAlchemyError as err:
+            logger.error(f"Database error while finding art with id: {art_id}, error: {err}")
+            raise InternalServerErrorHTTPException(f"Failed to delete art with id: {art_id}")
 
-            if art_delete_result:
-                logger.info(f"Successfully deleted art with id: {art_id}")
-            else:
-                logger.warning(f"Art with id: {art_id} not found or already deleted.")
+        if not art_entities:
+            logger.warning(f"Art with id: {art_id} not found or already deleted.")
+            return False
 
-            return art_delete_result
+        art_entity: "ArtEntity" = art_entities[0]
 
+        try:
+            await self.art_repo.delete_one(object_id=art_id)
+            logger.info(f"Successfully deleted art with id: {art_id}")
         except SQLAlchemyError as err:
             logger.error(f"Failed to delete art with id: {art_id}, error: {err}")
-            raise InternalServerErrorHTTPException(f"Failed to delete art with id: {art_id}")
+            raise InternalServerErrorHTTPException
+
+        try:
+            await s3_client.delete_file(blob_name=art_entity.blob_name)
+        except GoogleCloudError as err:
+            logger.error(f"Failed to delete art with id: {art_id} from cloud storage, error: {err}")
+            with open(UNDELETED_BLOB_NAMES_FILE, mode='a', encoding='utf-8') as f:
+                f.write(f"{art_entity.blob_name}\n")
+
+        return True
