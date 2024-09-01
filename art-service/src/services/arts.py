@@ -27,10 +27,23 @@ if TYPE_CHECKING:
 
 
 class ArtsService:
+    """
+    Service class for managing art operations, including adding, retrieving, and deleting arts.
+
+    Attributes:
+        IMG_TYPES (tuple[str]): Supported image MIME types for art uploads (e.g., JPEG, PNG, WEBP).
+        JPEG (str): The MIME type for JPEG images.
+        art_repo (ArtRepository): Repository for performing database operations related to arts.
+    """
     IMG_TYPES: tuple[str] = ("image/jpeg", "image/png", "image/webp")
     JPEG: str = "image/jpeg"
 
     def __init__(self, art_repo: "ArtRepository"):
+        """
+        Initializes the ArtsService with the provided repository.
+
+        @param art_repo: The repository interface for interacting with art data.
+        """
         self.art_repo = art_repo
         logger.info(f"Initialized ArtsService with repository: {self.art_repo}")
 
@@ -38,6 +51,18 @@ class ArtsService:
                       art_data: "ArtUploadSchema",
                       art_file: "UploadFile",
                       ) -> int:
+        """
+        Adds a new art to the repository.
+
+        If the uploaded image is in a format other than JPEG, it is converted to JPEG before uploading.
+        The image is uploaded to cloud storage, and its URL is saved along with art metadata.
+
+        @param art_data: Metadata for the art, including user ID, title, and tags.
+        @param art_file: The uploaded image file. Supported formats are defined by `IMG_TYPES`.
+        @return: The ID of the newly created art in the repository.
+        @raises FailedUploadHttpException: If the image upload to cloud storage fails.
+        @raises InternalServerErrorHTTPException: If an unexpected error occurs during the process.
+        """
         art_type: str = art_file.content_type
         image_file: "BinaryIO" = art_file.file
 
@@ -80,6 +105,17 @@ class ArtsService:
         return new_art_id
 
     async def get_arts(self, art_id: int | None = None) -> "list[ArtEntity]":
+        """
+        Retrieves arts from the repository.
+
+        If an `art_id` is provided, retrieves the specific art with that ID. If no ID is provided, retrieves all arts.
+        Updates the URL of arts if the URL has expired (older than 6 days).
+
+        @param art_id: Optional ID of the art to retrieve. If None, retrieves all arts.
+        @return: A list of `ArtEntity` objects representing the retrieved arts.
+        @raises ArtNotFoundHTTPException: If no art is found with the specified ID.
+        @raises InternalServerErrorHTTPException: If a database error occurs during retrieval or update.
+        """
         logger.info(f"get_arts called with art_id: {art_id}")
         try:
             filter_condition: dict = {}
@@ -138,3 +174,29 @@ class ArtsService:
         except Exception as err:
             logger.error(f"Unexpected error occurred: {err}", exc_info=True)
             raise InternalServerErrorHTTPException(detail="An unexpected error occurred")
+
+    async def del_art(self, art_id: int):
+        """
+        Deletes an art from the repository by its ID.
+
+        Attempts to delete the specified art. If the art is not found or has already been deleted,
+        returns `False`. If the deletion fails due to a database error, an exception is raised.
+
+        @param art_id: The ID of the art to delete.
+        @return: `True` if the art was successfully deleted; `False` if it was not found or already deleted.
+        @raises InternalServerErrorHTTPException: If a database error occurs during deletion.
+        """
+        try:
+            logger.info(f"Attempting to delete art with id: {art_id}")
+            art_delete_result: bool = await self.art_repo.delete_one(object_id=art_id)
+
+            if art_delete_result:
+                logger.info(f"Successfully deleted art with id: {art_id}")
+            else:
+                logger.warning(f"Art with id: {art_id} not found or already deleted.")
+
+            return art_delete_result
+
+        except SQLAlchemyError as err:
+            logger.error(f"Failed to delete art with id: {art_id}, error: {err}")
+            raise InternalServerErrorHTTPException(f"Failed to delete art with id: {art_id}")
