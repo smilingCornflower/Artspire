@@ -36,6 +36,17 @@ async def get_arts(
         art_id: int | None = None,
         art_service: "ArtsService" = Depends(get_arts_service),
 ) -> list:
+    """
+    Fetches art entities from the repository based on the optional `art_id`.
+
+    When `art_id` is provided, it returns the specific art entity with that ID.
+    If `art_id` is not provided, it retrieves all art entities.
+
+    @param art_id: Optional ID of the art entity to be fetched. If not provided, all art entities are retrieved.
+    @return: A list of art entities.
+    @raises ArtNotFoundHTTPException: If no art entities are found for the provided `art_id`.
+    @raises InternalServerErrorHTTPException: If a database or unexpected error occurs.
+    """
     one_or_all_arts: "list[ArtEntity]" = await art_service.get_arts(art_id=art_id)
     return one_or_all_arts
 
@@ -48,6 +59,21 @@ async def post_art(
         art_service: "ArtsService" = Depends(get_arts_service),
         user_data: "UserEntity" = Depends(get_user_data),
 ) -> int:
+    """
+    Uploads a new art.
+    Creates a new art with the provided file, tags, and optional title.
+    The user making the request must be authenticated.
+
+    @param art_file: The file of the art to be uploaded.
+    @param art_tags: A comma-separated string of tags associated with the art.
+    @param art_title: Optional; The title of the art. If None, the art will be created without a title.
+    @param art_service: The service responsible for handling art operations. Dependency-injected.
+    @param user_data: The authenticated user making the request. Dependency-injected.
+
+    @return: The ID of the newly created art entity.
+
+    @raises FailedUploadHttpException: If the art upload fails.
+    """
     art_upload_data: "ArtUploadSchema" = ArtUploadSchema(
         user_id=user_data.id,
         title=art_title,
@@ -58,6 +84,32 @@ async def post_art(
     except FailedUploadHttpException as err:
         raise
     return new_art_id
+
+
+@router.delete("")
+async def delete_art(
+        art_id: int,
+        user_data: "UserEntity" = Depends(get_user_data),
+        art_service: "ArtsService" = Depends(get_arts_service),
+):
+    """
+    Deletes an artwork by its ID.
+
+    Checks user permissions and deletes the art if allowed.
+    Returns `True` if successful, `False` if the artwork is not found. Raises `ForbiddenHTTPException` if the user lacks the necessary permissions.
+
+    @param art_id: ID of the artwork to delete.
+    @param user_data: User information for permission checks.
+    @param art_service: Service for artwork operations.
+    @return: `True` if the artwork was deleted, `False` if not found.
+    @raises ForbiddenHTTPException: If the user lacks permissions.
+    @raises InternalServerError: If an error occurs during the deletion process.
+    """
+    if user_data.role_id == 2:
+        art_delete_result: bool = await art_service.del_art(art_id=art_id)
+        return art_delete_result
+    else:
+        raise ForbiddenHTTPException
 
 
 @router.post("/tags")
