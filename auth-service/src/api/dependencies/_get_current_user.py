@@ -2,7 +2,7 @@ from fastapi import Depends
 from utils.jwt_utils import ACCESS_TOKEN_TYPE
 from schemas.users import UserReadSchema
 from config import settings, logger
-from .get_decoded_token import get_decoded_access_token
+from ._get_decoded_token import get_decoded_access_token
 
 
 def get_current_user(
