@@ -2,6 +2,7 @@ import asyncio
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from rabbit.jwt_server import jwt_server
 from api.router import router as auth_router
@@ -14,6 +15,7 @@ async def async_lifespan(app_name: FastAPI):
     app.jwt_task = asyncio.create_task(jwt_server())
     yield
     app.jwt_task.cancel()
+
 
 app = FastAPI(
     title="Artspire-Auth",
@@ -30,6 +32,12 @@ app.add_middleware(
 
 app.include_router(auth_router)
 
+
+@app.get("/")
+async def redirect_to_docs() -> RedirectResponse:
+    return RedirectResponse(url="/docs")
+
+
 if __name__ == "__main__":
     logger.info(f"In __main__")
-    uvicorn.run(app=app, port=8001, host="0.0.0.0")
+    uvicorn.run(app=app, port=8002, host="0.0.0.0")
