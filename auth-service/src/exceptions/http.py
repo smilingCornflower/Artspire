@@ -1,16 +1,15 @@
 from fastapi import HTTPException, status
-from sqlalchemy.exc import SQLAlchemyError
 
 
 class UsernameAlreadyExistHTTPException(HTTPException):
     def __init__(self):
-        super().__init__(status_code=status.HTTP_400_BAD_REQUEST,
+        super().__init__(status_code=status.HTTP_409_CONFLICT,
                          detail="User with this username already exists")
 
 
 class EmailAlreadyExistsHTTPException(HTTPException):
     def __init__(self):
-        super().__init__(status_code=status.HTTP_400_BAD_REQUEST,
+        super().__init__(status_code=status.HTTP_409_CONFLICT,
                          detail="User with this email already exists")
 
 
@@ -34,17 +33,15 @@ class UserNotActiveHTTPException(HTTPException):
 
 class UnauthorizedHTTPException(HTTPException):
     def __init__(self):
-        super().__init__(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password")
+        super().__init__(status_code=status.HTTP_401_UNAUTHORIZED,
+                         detail="Invalid username or password")
 
 
 class InvalidTokenHTTPException(HTTPException):
-    def __init__(self, status_code: int = 401, detail: str = "Invalid token received"):
-        super().__init__(
-            status_code=status_code,
-            detail=detail,
-        )
+    def __init__(self, status_code: int = status.HTTP_401_UNAUTHORIZED,
+                 detail: str = "Invalid token received"):
+        super().__init__(status_code=status_code,
+                         detail=detail)
 
 
 class InvalidTokenTypeHTTPException(InvalidTokenHTTPException):
