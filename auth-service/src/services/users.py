@@ -46,6 +46,20 @@ class UserService:
         self.user_repo = user_repo
 
     async def add_user(self, user_create_data: UserCreateSchema) -> int:
+        """
+        Adds a new user to the repository.
+
+        Checks if a user with the given username or email already exists. If so, raises an appropriate exception.
+        Validates the password length and raises an exception if the password is too weak.
+
+        Hashes the provided password before storing the new user in the repository.
+
+        @param user_create_data: An instance of `UserCreateSchema` containing the user's username, email, and password.
+        @return: The ID of the newly created user.
+        @raises UsernameAlreadyExistHTTPException: If a user with the specified username already exists.
+        @raises EmailAlreadyExistsHTTPException: If a user with the specified email already exists.
+        @raises WeakPasswordHTTPException: If the provided password is shorter than 6 characters.
+        """
         user_by_username: list[UserEntity] = await self.user_repo.find_all(
             filter_by={"username": user_create_data.username})
         if user_by_username:
@@ -70,6 +84,16 @@ class UserService:
         return new_user_id
 
     async def validate_user(self, user: UserLoginSchema) -> TokenInfoSchema:
+        """
+        Validates a user's credentials and generates an authentication token.
+
+        Checks if a user with the provided username exists and is active. Validates the user's password.
+        If any validation fails, raises an appropriate exception. If validation succeeds, generates and returns a token for the user.
+
+        @param user: An instance of `UserLoginSchema` containing the username and password for authentication.
+        @return: An instance of `TokenInfoSchema` containing the authentication token and related information.
+        @raises UnauthorizedHTTPException: If the username does not exist, the user is not active, or the password is incorrect.
+        """
         user_by_username: list[UserEntity] = await self.user_repo.find_all({"username": user.username})
 
         if not user_by_username:
@@ -89,8 +113,7 @@ class UserService:
 
         return token_data
 
-    # TODO: Make one function for token creation
-    async def create_token_for_user_by_id(self, user_id: int, include_refresh: bool) -> TokenInfoSchema:
+    async def create_token_for_user_by_id(self, user_id: int, include_refresh: bool = False) -> TokenInfoSchema:
         user_by_id: list[UserEntity] = await self.user_repo.find_all({"id": user_id})
         result_token = create_token_for_user(
             user=user_by_id[0],
