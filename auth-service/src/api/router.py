@@ -7,7 +7,14 @@ from schemas.users import (
 from config import logger
 from services.users import UserService
 from schemas.tokens import TokenInfoSchema
-from .dependencies import get_user_service, get_current_user, get_decoded_refresh_token
+from .dependencies import (
+    get_user_service,
+    get_current_user,
+    get_decoded_refresh_token,
+    get_user_create_data,
+)
+from typing import Annotated
+
 
 router = APIRouter(
     prefix="/users",
@@ -17,7 +24,7 @@ router = APIRouter(
 
 @router.post("/register")
 async def register_user(
-        user_create_data: UserCreateSchema,
+        user_create_data: Annotated["UserCreateSchema", Depends(get_user_create_data)],
         user_service: UserService = Depends(get_user_service)
 ) -> int:
     new_user_id: int = await user_service.add_user(user_create_data)
