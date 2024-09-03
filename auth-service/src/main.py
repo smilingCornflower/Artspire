@@ -40,4 +40,4 @@ async def redirect_to_docs() -> RedirectResponse:
 
 if __name__ == "__main__":
     logger.info(f"In __main__")
-    uvicorn.run(app=app, port=8002, host="0.0.0.0")
+    uvicorn.run(app=app, port=8001, host="0.0.0.0")
