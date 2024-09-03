@@ -5,7 +5,8 @@ secrets
 *.log
 *.yaml
 *.yml
-debug.log
-docker-compose.yaml
 docker-compose.txt
 venv
+.venv
+tempo.py
+my_actions.txt
