@@ -4,7 +4,23 @@ from fastapi import HTTPException, status
 class FailedUploadHttpException(HTTPException):
     def __init__(self, detail: str = "Failed to upload file"):
         super().__init__(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=detail,
+        )
+
+
+class InvalidImageTypeHTTPException(HTTPException):
+    def __init__(self, detail: str = "Invalid image type provided"):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=detail,
+        )
+
+
+class InternalServerErrorHTTPException(HTTPException):
+    def __init__(self, detail: str = "Internal server error"):
+        super().__init__(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=detail,
         )
 
@@ -14,14 +30,6 @@ class UnauthorizedHTTPException(HTTPException):
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=detail
-        )
-
-
-class InternalServerErrorHTTPException(HTTPException):
-    def __init__(self, detail: str = "Internal server error"):
-        super().__init__(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=detail,
         )
 
 
@@ -44,6 +52,6 @@ class ArtNotFoundHTTPException(HTTPException):
 class TagAlreadyExistsHTTPException(HTTPException):
     def __init__(self, detail: str = "Tag already exists"):
         super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_409_CONFLICT,
             detail=detail,
         )

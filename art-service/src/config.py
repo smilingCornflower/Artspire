@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import date
 
 import pika
 from loguru import logger
@@ -27,11 +28,12 @@ class RMQConfig(BaseModel):
 
 
 class LoggingConfig(BaseModel):
-    info_logs_path: Path = art_dir / "logs/info.log"
-    debug_logs_path: Path = art_dir / "logs/debug.log"
-    warning_logs_path: Path = art_dir / "logs/warning.log"
-    error_logs_path: Path = art_dir / "logs/error.log"
-    critical_logs_path: Path = art_dir / "logs/critical.log"
+    today_date: str = str(date.today())
+    info_logs_path: Path = art_dir / f"logs/{today_date}/info.log"
+    debug_logs_path: Path = art_dir / f"logs/{today_date}/debug.log"
+    warning_logs_path: Path = art_dir / f"logs/{today_date}/warning.log"
+    error_logs_path: Path = art_dir / f"logs/{today_date}/error.log"
+    critical_logs_path: Path = art_dir / f"logs/{today_date}/critical.log"
 
 
 class DatabaseConfig(BaseModel):
