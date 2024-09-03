@@ -83,7 +83,3 @@ class S3Client:
         except GoogleCloudError as err:
             logger.error(f"Google Cloud error during URL generation: {err}")
             raise err
-
-s3_client = S3Client(
-    bucket_name=settings.s3.bucket_name
-)
