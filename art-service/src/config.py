@@ -17,7 +17,7 @@ class BucketConfig(BaseModel):
 
 
 class RMQConfig(BaseModel):
-    host: str = "0.0.0.0"
+    host: str
     port: int = 5672
     user: str
     password: str

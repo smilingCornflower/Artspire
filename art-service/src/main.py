@@ -3,9 +3,7 @@ from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from api.router import router as arts_router
 from fastapi.middleware.cors import CORSMiddleware
-import asyncio
-from asyncio import Task
-
+from config import logger
 
 async def async_lifespan(app: FastAPI):
     yield
@@ -31,4 +29,5 @@ async def redirect_to_docs() -> RedirectResponse:
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, port=8000)
+    logger.info(f"In __main__")
+    uvicorn.run(app=app, port=8000, host="0.0.0.0")
