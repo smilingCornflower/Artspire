@@ -109,7 +109,7 @@ async def delete_tag(
 
 
 @router.post("/save", description=description_post_save_art, tags=["arts"])
-async def like_art(
+async def save_art(
         art_id: int,
         user_data: Annotated["UserEntity", Depends(get_user_data)],
         user_saved_service: Annotated["UserSavedArtsService", Depends(get_user_saved_arts_service)],
