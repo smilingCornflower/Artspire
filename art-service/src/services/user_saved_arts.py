@@ -21,6 +21,20 @@ class UserSavedArtsService:
         self.user_saved_repo = user_saved_repo
 
     async def add_to_saved(self, user_id: int, art_id: int) -> bool:
+        """
+        Adds artwork to the user's saved list.
+
+        Raises ArtNotFoundHTTPException if the art is not found.
+        Raises ArtAlreadySavedHTTPException if the art is already saved.
+        Raises InternalServerErrorHTTPException for database errors.
+
+        Parameters:
+        - user_id (int): User ID.
+        - art_id (int): Art ID.
+
+        Returns:
+        - bool: True if successful.
+        """
         logger.warning(f"Started saving art")
         art_with_this_id: list = await self.arts_repo.find_all({"id": art_id})
         if not art_with_this_id:
