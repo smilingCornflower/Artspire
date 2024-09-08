@@ -10,7 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 # Local modules
 from schemas.arts import ArtCreateSchema, ArtUploadSchema
- from bucket.s3_service import s3_service
+from bucket.s3_service import s3_service
 from exceptions.http_exc import (
     ArtNotFoundHTTPException,
     InternalServerErrorHTTPException,
