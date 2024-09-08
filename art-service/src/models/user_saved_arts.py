@@ -10,3 +10,10 @@ class UserSavedArtsOrm(Base):
 
     id: M[int] = mc(primary_key=True, index=True)
     arts: M[list[int]] = mc(ARRAY(Integer), nullable=True)
+
+    def to_entity(self) -> "UserSavedArtsEntity":
+        user_saved_arts_entity = UserSavedArtsEntity(
+            id=self.id,
+            arts=self.arts,
+        )
+        return user_saved_arts_entity
