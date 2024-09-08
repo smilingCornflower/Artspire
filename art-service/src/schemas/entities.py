@@ -8,7 +8,6 @@ class BaseEntity(BaseModel):
 
 
 class UserEntity(BaseEntity):
-    id: int
     username: str
     email: EmailStr
     profile_image: str | None
@@ -16,12 +15,10 @@ class UserEntity(BaseEntity):
 
 
 class TagEntity(BaseEntity):
-    id: int
     name: str
 
 
 class ArtEntity(BaseEntity):
-    id: int
     user_id: int
     blob_name: str
     url: str
@@ -30,3 +27,7 @@ class ArtEntity(BaseEntity):
     likes_count: int = 0
     tags: list | dict | None = None
     created_at: datetime | None = None
+
+
+class UserSavedArtsEntity(BaseEntity):
+    arts: list[int]

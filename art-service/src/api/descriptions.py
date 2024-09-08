@@ -90,3 +90,19 @@ description_delete_tag: str = """
 **Permission Required:**
 - The user must be at least a moderator to make this request.
 """
+
+description_post_save_art: str = """
+**Description**: Adds an artwork to the user's saved list.
+
+**Parameters:**  
+- **art_id**: The ID of the artwork to be saved.
+
+**Returns:**  
+- **200 OK**: True if the artwork was successfully added.
+- **404 Not Found**: If the artwork is not found.
+- **409 Conflict**: If the artwork is already saved by the user.
+- **500 Internal Server Error**: If there is a database error during the operation.
+
+**Permission Required:**  
+- No special permissions are required to make this request.
+"""
