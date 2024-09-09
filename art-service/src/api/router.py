@@ -18,7 +18,7 @@ from .dependencies import (
 from .descriptions import (
     description_get_arts, description_post_art, description_delete_art,
     description_get_tags, description_post_tag, description_delete_tag,
-    description_post_save_art,
+    description_post_user_save, description_delete_user_save
 )
 from exceptions.http_exc import (
     UnauthorizedHTTPException,
@@ -108,11 +108,26 @@ async def delete_tag(
     return tag_delete_result
 
 
-@router.post("/save", description=description_post_save_art, tags=["arts"])
-async def save_art(
-    art_id: int,
-    user_data: Annotated["UserEntity", Depends(get_user_data)],
-    users_to_saves_service: Annotated["UsersToSavesService", Depends(get_users_to_saves_service)],
+@router.post("/save", description=description_post_user_save, tags=["user_saves"], status_code=201)
+async def post_user_save(
+        art_id: int,
+        user_data: Annotated["UserEntity", Depends(get_user_data)],
+        users_to_saves_service: Annotated[
+            "UsersToSavesService", Depends(get_users_to_saves_service)],
 ) -> bool:
     result: bool = await users_to_saves_service.save_art(user_id=user_data.id, art_id=art_id)
+    return result
+
+
+@router.delete("/save", description=description_delete_user_save, tags=["user_saves"])
+async def delete_user_save(
+        art_id: int,
+        user_data: Annotated["UserEntity", Depends(get_user_data)],
+        users_to_saves_service: Annotated[
+            "UsersToSavesService", Depends(get_users_to_saves_service)],
+) -> bool:
+    result: bool = await users_to_saves_service.delete_from_saved(
+        user_id=user_data.id,
+        art_id=art_id
+    )
     return result

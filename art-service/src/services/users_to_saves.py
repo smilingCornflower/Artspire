@@ -42,3 +42,14 @@ class UsersToSavesService:
         except SQLAlchemyError as err:
             raise InternalServerErrorHTTPException
         return bool(result_rowcount)
+
+    async def delete_from_saved(self, user_id: int, art_id: int) -> bool:
+        """
+        Delete a user_save from repository
+        @return: True or False. True if an item was deleted, False if it was not found in repository
+        """
+        logger.info(f"Started delete_from_saved()")
+        to_delete: dict = {"user_id": user_id, "art_id": art_id}
+        logger.debug(f"to_delete: {to_delete}")
+        result_rows: int = await self.repo.delete_one(to_delete)
+        return bool(result_rows)

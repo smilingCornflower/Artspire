@@ -24,6 +24,7 @@ description_post_art: str = """
 **Returns:**
 - **201 CREATED**: Successful, the ID of the newly created art entity.
 - **422 Unprocessable Entity**: If server cannot process this type of file.
+- **401 Unauthorized**: If the user is not authorized, you should provide jwt in headers to authorize
 - **500 Internal Server Error**: If an unexpected server error occurs during processing.
 
 **Authentication Required:**
@@ -39,6 +40,7 @@ description_delete_art: str = """
 **Returns:**  
 - **200 OK**: True If the art was successfully deleted.  
 - **200 OK**: False If the art was not found.  
+- **401 Unauthorized**: If the user is not authorized, you should provide jwt in headers to authorize
 - **403 Forbidden**: If the user lacks the necessary permissions to delete the art.  
 - **500 Internal Server Error**: If an unexpected server error occurs during processing.
 
@@ -69,6 +71,7 @@ description_post_tag: str = """
 
 **Returns:**
 - **201 CREATED**: Success, returns the ID of the newly created tag.
+- **401 Unauthorized**: If the user is not authorized, you should provide jwt in headers to authorize
 - **409 Conflict**: If the tag already exists.
 - **500 Internal Server Error**: If an unexpected server error occurs during the creation process.
 
@@ -84,24 +87,43 @@ description_delete_tag: str = """
 
 **Returns:**  
 - **200 OK**: True If the tag was successfully deleted.  
-- **200 OK**: False If the tag was not found.  
+- **200 OK**: False If the tag was not found.
+- **401 Unauthorized**: If the user is not authorized, you should provide jwt in headers to authorize  
 - **500 Internal Server Error**: If an unexpected server error occurs during processing.
 
 **Permission Required:**
 - The user must be at least a moderator to make this request.
 """
 
-description_post_save_art: str = """
-**Description**: Adds an art to the user's saved list.
+description_post_user_save: str = """
+**Description**: Add an art to the user's saved list.
 
 **Parameters:**  
 - **art_id**: The ID of the art to be saved.
 
 **Returns:**  
-- **200 OK**: True if record has written, False if such pair already exists in repository
+- **201 CREATED**: True if record has written, False if such pair already exists in repository
+- **401 Unauthorized**: If the user is not authorized, you should provide jwt in headers to authorize
 - **404 Not Found**: If the art with the given **art_id** is not found.
 - **500 Internal Server Error**: If there is a database error during the operation.
 
 **Permission Required:**  
+- User must be authenticated.
+"""
+
+
+description_delete_user_save: str = """
+**Description**: Deletes the user save by art_id
+
+**Parameters:**  
+- **art_id**: The ID of the saved art to delete.  
+
+**Returns:**  
+- **200 OK**: True If the art was successfully removed from saved list.  
+- **200 OK**: False If the art with this id was not found.  
+- **401 Unauthorized**: If the user is not authorized, you should provide jwt in headers to authorize
+- **500 Internal Server Error**: If an unexpected server error occurs during processing.
+
+**Permission Required:**
 - User must be authenticated.
 """
