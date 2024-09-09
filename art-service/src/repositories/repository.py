@@ -36,7 +36,7 @@ class AbstractRepository(ABC):
         raise NotImplemented
 
     @abstractmethod
-    async def delete_one(self, model_key: "Any", model_value: "Any"):
+    async def delete_one(self, delete_by: dict):
         raise NotImplemented
 
 
@@ -83,17 +83,23 @@ class SQLAlchemyRepository(AbstractRepository):
             logger.info(f"Found {len(entities)} entities")
             return entities
 
-    async def delete_one(self, model_key: "Any", model_value: "Any") -> int:
+    async def delete_one(self, delete_by: dict) -> int:
         async with db_manager.async_session_maker() as session:
             async with session.begin():
-                logger.debug(f"model_key: {model_key}, model_value: {model_value}")
-                if not hasattr(self.model, model_key):
-                    logger.critical(f"AttributeError during deleting in model {self.model}")
-                    raise AttributeError(f"A model {self.model} has no attribute {model_key}")
-                # noinspection PyTypeChecker
-                expression: "BinaryExpression" = getattr(self.model, model_key) == model_value
+                logger.debug(f"data: {delete_by}")
+                conditions: list[BinaryExpression] = []
+
+                for key, value in delete_by.items():
+                    if not hasattr(self.model, key):
+                        raise AttributeError(f"A model {self.model} has no attribute {key}")
+                    # noinspection PyTypeChecker
+                    expression: "BinaryExpression" = getattr(self.model, key) == value
+                    conditions.append(expression)
+                if not conditions:
+                    raise ValueError(f"Conditions must contain at least one entry")
+
                 try:
-                    stmt: "Delete" = delete(self.model).where(expression)
+                    stmt: "Delete" = delete(self.model).where(and_(*conditions))
                     result: "ChunkedIteratorResult" = await session.execute(stmt)
                     result_rowcount: int = result.rowcount
                     logger.info(f"Deleted {result_rowcount} items")
