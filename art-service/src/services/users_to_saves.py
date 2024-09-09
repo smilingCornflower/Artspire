@@ -18,7 +18,16 @@ class UsersToSavesService:
         self.repo: "UsersToSavesRepository" = users_to_service_repo
         self.art_repo: "ArtRepository" = art_repo
 
-    async def save_art(self, user_id: int, art_id: int) -> int:
+    async def save_art(self, user_id: int, art_id: int) -> bool:
+        """
+        Saves a pair (user_id, art_id) in repository.
+
+        :param user_id: The ID of the user.
+        :param art_id: The ID of the art.
+        :return: True if record has written, False if such pair already exists in repository
+        :raises ArtNotFoundHTTPException: If the art with the given art_id is not found.
+        :raises InternalServerErrorHTTPException: If an error occurs while adding the record to the repository.
+        """
         logger.warning(f"Started save_art()")
         logger.debug(f"(user_id, art_id) = ({user_id}, {art_id})")
         # noinspection PyTypeChecker
@@ -32,4 +41,4 @@ class UsersToSavesService:
             logger.info(f"Finished save_art(), rowcount={result_rowcount}")
         except SQLAlchemyError as err:
             raise InternalServerErrorHTTPException
-        return result_rowcount
+        return bool(result_rowcount)
