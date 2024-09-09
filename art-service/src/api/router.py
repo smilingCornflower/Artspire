@@ -13,12 +13,11 @@ from .dependencies import (
     get_arts_service,
     get_user_data,
     get_tags_service,
-    get_user_saved_arts_service,
+    get_users_to_saves_service,
 )
 from .descriptions import (
     description_get_arts, description_post_art, description_delete_art,
     description_get_tags, description_post_tag, description_delete_tag,
-    description_post_save_art,
 )
 from exceptions.http_exc import (
     UnauthorizedHTTPException,
@@ -33,7 +32,7 @@ if TYPE_CHECKING:
     from fastapi.security.http import HTTPAuthorizationCredentials
     from services.arts import ArtsService
     from schemas.entities import TagEntity, ArtEntity
-    from services.user_saved_arts import UserSavedArtsService
+    from services.users_to_saves import UsersToSavesService
 
 router = APIRouter(
     prefix="/arts",
@@ -108,13 +107,11 @@ async def delete_tag(
     return tag_delete_result
 
 
-@router.post("/save", description=description_post_save_art, tags=["arts"])
+@router.post("/save")
 async def save_art(
-        art_id: int,
-        user_data: Annotated["UserEntity", Depends(get_user_data)],
-        user_saved_service: Annotated["UserSavedArtsService", Depends(get_user_saved_arts_service)],
-) -> bool:
-    result: bool = await user_saved_service.add_to_saved(user_data.id, art_id=art_id)
+    art_id: int,
+    user_data: Annotated["UserEntity", Depends(get_user_data)],
+    users_to_saves_service: Annotated["UsersToSavesService", Depends(get_users_to_saves_service)],
+) -> int:
+    result: int = await users_to_saves_service.save_art(user_id=user_data.id, art_id=art_id)
     return result
-
-
