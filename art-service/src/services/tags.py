@@ -28,11 +28,14 @@ class TagsService:
 
     async def delete_tag(self, tag_id: int) -> bool:
         try:
-            tag_delete_result: bool = await self.tag_repo.delete_one(object_id=tag_id)
+            tag_delete_result: int = await self.tag_repo.delete_one(
+                model_key="id",
+                model_value=tag_id,
+            )
         except SQLAlchemyError as err:
             logger.error(f"Failed to delete tag with id {tag_id}: {err}")
             raise InternalServerErrorHTTPException
-        return tag_delete_result
+        return bool(tag_delete_result)
 
     async def get_tags(self) -> list:
         try:

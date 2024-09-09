@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from sqlalchemy.sql.expression import BinaryExpression
     from sqlalchemy.sql.schema import Column
     from schemas.arts import ArtCreateSchema
+    from typing import Any
 
 
 class AbstractRepository(ABC):
@@ -35,7 +36,7 @@ class AbstractRepository(ABC):
         raise NotImplemented
 
     @abstractmethod
-    async def delete_one(self, object_id: int):
+    async def delete_one(self, model_key: "Any", model_value: "Any"):
         raise NotImplemented
 
 
@@ -82,19 +83,21 @@ class SQLAlchemyRepository(AbstractRepository):
             logger.info(f"Found {len(entities)} entities")
             return entities
 
-    async def delete_one(self, object_id: int) -> bool:
+    async def delete_one(self, model_key: "Any", model_value: "Any") -> int:
         async with db_manager.async_session_maker() as session:
             async with session.begin():
+                logger.debug(f"model_key: {model_key}, model_value: {model_value}")
+                if not hasattr(self.model, model_key):
+                    logger.critical(f"AttributeError during deleting in model {self.model}")
+                    raise AttributeError(f"A model {self.model} has no attribute {model_key}")
+                # noinspection PyTypeChecker
+                expression: "BinaryExpression" = getattr(self.model, model_key) == model_value
                 try:
-                    stmt: "Delete" = delete(self.model).where(self.model.id == object_id)
+                    stmt: "Delete" = delete(self.model).where(expression)
                     result: "ChunkedIteratorResult" = await session.execute(stmt)
-
-                    if result.rowcount == 1:
-                        logger.info(f"Successfully deleted item with ID {object_id}.")
-                        return True
-                    else:
-                        logger.warning(f"Item with ID {object_id} not found or already deleted.")
-                        return False
+                    result_rowcount: int = result.rowcount
+                    logger.info(f"Deleted {result_rowcount} items")
+                    return result_rowcount
                 except SQLAlchemyError as err:
                     logger.error(f"Error occurred during delete operation: {err}", exc_info=True)
                     raise err

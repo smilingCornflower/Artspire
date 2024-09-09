@@ -166,7 +166,7 @@ class ArtsService:
 
         art_entity: "ArtEntity" = art_entities[0]
         try:
-            await self.art_repo.delete_one(object_id=art_id)
+            await self.art_repo.delete_one(model_key="id", model_value=art_id)
         except SQLAlchemyError as err:
             logger.error(f"Error: {err}")
             raise InternalServerErrorHTTPException from err
