@@ -12,7 +12,8 @@ from .dependencies import (
     get_art_upload_data,
     get_arts_service,
     get_user_data,
-    get_tags_service
+    get_tags_service,
+    get_users_to_saves_service,
 )
 from .descriptions import (
     description_get_arts, description_post_art, description_delete_art,
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
     from fastapi.security.http import HTTPAuthorizationCredentials
     from services.arts import ArtsService
     from schemas.entities import TagEntity, ArtEntity
+    from services.users_to_saves import UsersToSavesService
 
 router = APIRouter(
     prefix="/arts",
@@ -103,3 +105,13 @@ async def delete_tag(
         raise ForbiddenHTTPException
     tag_delete_result: bool = await tag_service.delete_tag(tag_id)
     return tag_delete_result
+
+
+@router.post("/save")
+async def save_art(
+    art_id: int,
+    user_data: Annotated["UserEntity", Depends(get_user_data)],
+    users_to_saves_service: Annotated["UsersToSavesService", Depends(get_users_to_saves_service)],
+) -> int:
+    result: int = await users_to_saves_service.save_art(user_id=user_data.id, art_id=art_id)
+    return result
