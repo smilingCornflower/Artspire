@@ -1,5 +1,5 @@
 # SQLAlchemy
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 # Local
@@ -13,6 +13,12 @@ from schemas.entities import TagEntity
 
 from .art_to_tag import ArtToTagRepository
 from .tags import TagRepository
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sqlalchemy import Update
+    from sqlalchemy import CursorResult
 
 
 class ArtRepository(SQLAlchemyRepository):
@@ -56,6 +62,20 @@ class ArtRepository(SQLAlchemyRepository):
             except SQLAlchemyError as err:
                 logger.error(f"SQLAlchemyError: {err}")
                 raise
-
         return new_art_id
 
+    async def alter_likes(self, art_id: int, number: int):
+        async with db_manager.async_session_maker() as session:
+            async with session.begin():
+                try:
+                    # noinspection PyTypeChecker
+                    stmt: "Update" = (update(self.model)
+                            .where(self.model.id == art_id)
+                            .values(likes_count=self.model.likes_count + number)
+                            )
+                    result: "CursorResult" = await session.execute(stmt)
+                    return result.rowcount
+
+                except SQLAlchemyError as err:
+                    logger.error(f"Error: {err}")
+                    raise err
