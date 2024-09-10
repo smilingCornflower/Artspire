@@ -9,7 +9,6 @@ WORKDIR /app
 COPY requirements.txt /app
 RUN pip install --no-cache-dir --requirement /app/requirements.txt
 
-COPY secrets /app/secrets
 COPY src /app/src
 
 WORKDIR /app/src

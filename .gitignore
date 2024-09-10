@@ -5,7 +5,9 @@ secrets
 *.log
 *.yaml
 *.yml
-docker-compose.txt
+*.pem
+bucket-credentials.json
+
 venv
 .venv
 tempo.py
