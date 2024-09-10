@@ -4,7 +4,7 @@ from sqlalchemy import ForeignKey
 from database.base import Base
 
 
-class UsersToLikes(Base):
+class UsersToLikesOrm(Base):
     __tablename__ = "users_to_likes"
 
     user_id: M[int] = mc(primary_key=True)

@@ -27,7 +27,3 @@ class ArtEntity(BaseEntity):
     likes_count: int = 0
     tags: list | dict | None = None
     created_at: datetime | None = None
-
-
-class UserSavedArtsEntity(BaseEntity):
-    arts: list[int]
