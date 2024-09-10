@@ -14,6 +14,7 @@ from .dependencies import (
     get_user_data,
     get_tags_service,
     get_users_to_saves_service,
+    get_users_to_likes_servcie,
 )
 from .descriptions import (
     description_get_arts, description_post_art, description_delete_art,
@@ -34,6 +35,7 @@ if TYPE_CHECKING:
     from services.arts import ArtsService
     from schemas.entities import TagEntity, ArtEntity
     from services.users_to_saves import UsersToSavesService
+    from services.users_to_likes import UsersToLikesService
 
 router = APIRouter(
     prefix="/arts",
@@ -131,3 +133,31 @@ async def delete_user_save(
         art_id=art_id
     )
     return result
+
+
+@router.post("/like", tags=["user_likes"], status_code=201)
+async def post_user_like(
+        art_id: int,
+        user_data: Annotated["UserEntity", Depends(get_user_data)],
+        user_to_likes_servcie: Annotated[
+            "UsersToLikesService", Depends(get_users_to_likes_servcie)
+        ],
+) -> bool:
+    result: bool = await user_to_likes_servcie.like_art(user_id=user_data.id, art_id=art_id)
+    return result
+
+
+@router.delete("/like", tags=["user_likes"])
+async def delete_user_like(
+        art_id: int,
+        user_data: Annotated["UserEntity", Depends(get_user_data)],
+        users_to_saves_service: Annotated[
+            "UsersToLikesService", Depends(get_users_to_likes_servcie)
+        ],
+) -> bool:
+    result: bool = await users_to_saves_service.delete_from_liked(
+        user_id=user_data.id,
+        art_id=art_id
+    )
+    return result
+

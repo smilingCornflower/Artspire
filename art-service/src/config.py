@@ -70,8 +70,8 @@ class Settings(BaseSettings):
 
     db: DatabaseConfig
     rmq: RMQConfig
-    log: LoggingConfig = LoggingConfig()
     s3: BucketConfig = BucketConfig()
+    log: LoggingConfig = LoggingConfig()
 
 
 settings = Settings()
