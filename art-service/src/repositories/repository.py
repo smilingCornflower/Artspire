@@ -28,7 +28,11 @@ class AbstractRepository(ABC):
         raise NotImplemented
 
     @abstractmethod
-    async def find_all(self, filter_by: dict):
+    async def find_all(self,
+                       filter_by: dict,
+                       offset: int | None,
+                       limit: int | None,
+                       ):
         raise NotImplemented
 
     @abstractmethod
@@ -60,10 +64,18 @@ class SQLAlchemyRepository(AbstractRepository):
                     logger.error(f"SQLAlchemyError: {err}")
                     raise err
 
-    async def find_all(self, filter_by: dict) -> "list[BaseEntity]":
+    async def find_all(self,
+                       filter_by: dict,
+                       offset: int | None = None,
+                       limit: int | None = None
+                       ) -> "list[BaseEntity]":
         logger.debug(f"Selecting from {self.model.__name__} with filter: {filter_by}")
         async with db_manager.async_session_maker() as session:
             stmt: "Select" = select(self.model)
+            print(f"offset: {offset}, limit: {limit}")
+            if offset is not None and limit is not None:
+                stmt: "Select" = stmt.offset(offset).limit(limit)
+
             if filter_by:
                 conditions: list[BinaryExpression] = []
                 for key, value in filter_by.items():
