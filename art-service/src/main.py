@@ -1,9 +1,10 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
-from api.router import router as arts_router
+from api.routers.router import router as arts_router
 from fastapi.middleware.cors import CORSMiddleware
 from config import logger
+
 
 async def async_lifespan(app: FastAPI):
     yield
