@@ -7,11 +7,12 @@ from api.routers.router import router
 from exceptions.http_exc import ForbiddenHTTPException
 from schemas.entities import TagEntity, UserEntity
 from services.tags import TagsService
+from typing import Annotated
 
 
 @router.get("/tags", description=description_get_tags, tags=["tags"])
 async def get_tags(
-        tag_service: "TagsService" = Depends(get_tags_service)
+        tag_service: Annotated["TagsService", Depends(get_tags_service)],
 ) -> list:
     all_tags: list["TagEntity"] = await tag_service.get_tags()
     return all_tags
@@ -20,8 +21,8 @@ async def get_tags(
 @router.post("/tags", description=description_post_tag, tags=["tags"], status_code=201)
 async def post_tag(
         tag_name: str,
+        tag_service: Annotated["TagsService", Depends(get_tags_service)],
         user_data: "UserEntity" = Depends(get_user_data),
-        tag_service: "TagsService" = Depends(get_tags_service)
 ) -> int:
     if user_data.role_id != 2:  # if user is not a moderator
         raise ForbiddenHTTPException
@@ -32,10 +33,19 @@ async def post_tag(
 @router.delete("/tags", description=description_delete_tag, tags=["tags"])
 async def delete_tag(
         tag_id: int,
+        tag_service: Annotated["TagsService", Depends(get_tags_service)],
         user_data: "UserEntity" = Depends(get_user_data),
-        tag_service: "TagsService" = Depends(get_tags_service)
 ) -> bool:
     if user_data.role_id != 2:
         raise ForbiddenHTTPException
     tag_delete_result: bool = await tag_service.delete_tag(tag_id)
     return tag_delete_result
+
+
+@router.get("/tags/search", tags=["tags"])
+async def search_tag(
+        tag_part: str,
+        tag_service: Annotated["TagsService", Depends(get_tags_service)],
+) -> list:
+    result_tags: list = await tag_service.tag_search(tag_part)
+    return result_tags
