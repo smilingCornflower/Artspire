@@ -110,26 +110,37 @@ class ArtsService:
             logger.error(f"Error: {err}")
             raise InternalServerErrorHTTPException from err
 
-    async def get_arts(self, art_id: int | None = None) -> "list[ArtEntity]":
+    async def get_arts(self,
+                       art_id: int | None = None,
+                       offset: int | None = None,
+                       limit: int | None = None,
+                       ) -> "list[ArtEntity]":
         """
         Retrieves a list of arts, optionally filtered by ID.
 
         If `art_id` is provided, retrieves the art with that ID. Otherwise, retrieves all arts.
         The URLs of the arts are refreshed if they are outdated.
 
-        :param art_id: The ID of the art to retrieve, or None to get all arts.
-        :return: A list of `ArtEntity` objects.
-        :raises ArtNotFoundHTTPException: If no arts are found.
-        :raises InternalServerErrorHTTPException: If there is an error.
+        param art_id: The ID of the art to retrieve, or None to get all arts.
+        param offset: The number of arts to skip, for pagination.
+        param limit: The maximum number of arts to return.
+        @return: A list of `ArtEntity` objects.
+        raises ArtNotFoundHTTPException: If no arts are found.
+        raises InternalServerErrorHTTPException: If there is an error.
         """
         logger.warning(f"Started get_arts()")
+
         if art_id:
             filter_condition: dict = {"id": art_id}
         else:
             filter_condition: dict = {}
         try:
             # noinspection PyTypeChecker
-            all_arts: list["ArtEntity"] = await self.art_repo.find_all(filter_condition)
+            all_arts: list["ArtEntity"] = await self.art_repo.find_all(
+                filter_by=filter_condition,
+                offset=offset,
+                limit=limit,
+            )
         except SQLAlchemyError as err:
             logger.error(f"Error: {err}")
             raise InternalServerErrorHTTPException from err
