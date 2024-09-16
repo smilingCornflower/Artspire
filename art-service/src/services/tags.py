@@ -41,3 +41,7 @@ class TagsService:
             logger.error(f"Failed to get tags {err}")
             raise InternalServerErrorHTTPException
         return all_tags
+
+    async def tag_search(self, tag_part: str) -> list:
+        result_tags: list = await self.tag_repo.get_tags_by_name_part(tag_part=tag_part)
+        return result_tags
