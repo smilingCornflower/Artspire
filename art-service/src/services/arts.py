@@ -114,6 +114,7 @@ class ArtsService:
                        art_id: int | None = None,
                        offset: int | None = None,
                        limit: int | None = None,
+                       include_tags: bool = False,
                        ) -> "list[ArtEntity]":
         """
         Retrieves a list of arts, optionally filtered by ID.
@@ -135,11 +136,16 @@ class ArtsService:
         else:
             filter_condition: dict = {}
         try:
+            art_attributes: list[str] | None = None
+            if include_tags:
+                art_attributes = ["tags"]
+
             # noinspection PyTypeChecker
             all_arts: list["ArtEntity"] = await self.art_repo.find_all(
                 filter_by=filter_condition,
                 offset=offset,
                 limit=limit,
+                joined_attributes=art_attributes,
             )
         except SQLAlchemyError as err:
             logger.error(f"Error: {err}")
@@ -189,9 +195,3 @@ class ArtsService:
                 f.write(f"{art_entity.blob_name}\n")
 
         return True
-
-    async def like_art(self, user_id: int):
-        ...
-        # todo: check user liked it already
-        # todo: like image
-        # todo: save image in "saved" of user
