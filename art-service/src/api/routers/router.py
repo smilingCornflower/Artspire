@@ -30,12 +30,14 @@ async def get_arts(
         art_id: int | None = None,
         offset: int | None = None,
         limit: int | None = None,
+        include_tags: bool = False,
         art_service: "ArtsService" = Depends(get_arts_service),
 ) -> list:
     one_or_all_arts: "list[ArtEntity]" = await art_service.get_arts(
         art_id=art_id,
         offset=offset,
         limit=limit,
+        include_tags=include_tags,
     )
     return one_or_all_arts
 
