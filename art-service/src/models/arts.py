@@ -8,9 +8,15 @@ from sqlalchemy import (
     DateTime,
     func,
 )
+from sqlalchemy.exc import MissingGreenlet
 from database.base import Base
 from datetime import datetime
 from schemas.entities import ArtEntity
+from config import logger
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .tags import TagOrm
 
 
 class ArtOrm(Base):
@@ -42,5 +48,10 @@ class ArtOrm(Base):
             likes_count=self.likes_count,
             created_at=self.created_at,
         )
-        return art_entity
+        try:
+            tags_info: list = [tag.to_entity() for tag in self.tags]
+            art_entity.tags = tags_info
+        except MissingGreenlet:
+            pass
 
+        return art_entity
