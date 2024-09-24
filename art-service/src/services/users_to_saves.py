@@ -4,17 +4,17 @@ from exceptions.http_exc import ArtNotFoundHTTPException, InternalServerErrorHTT
 from sqlalchemy.exc import SQLAlchemyError
 from config import logger
 
+from .arts import ArtsService
+
 if TYPE_CHECKING:
     from repositories.users_to_saves import UsersToSavesRepository
     from repositories.arts import ArtRepository
-    from schemas.entities import ArtEntity
+    from schemas.entities import ArtEntity, UsersToSavesEntity
 
 
-class UsersToSavesService:
-    def __init__(self,
-                 users_to_saves_repo: "UsersToSavesRepository",
-                 art_repo: "ArtRepository",
-                 ):
+class UsersToSavesService(ArtsService):
+    def __init__(self, users_to_saves_repo: "UsersToSavesRepository", art_repo: "ArtRepository"):
+        super().__init__(art_repo=art_repo)
         self.repo: "UsersToSavesRepository" = users_to_saves_repo
         self.art_repo: "ArtRepository" = art_repo
 
@@ -42,6 +42,37 @@ class UsersToSavesService:
         except SQLAlchemyError as err:
             raise InternalServerErrorHTTPException from err
         return bool(result_rowcount)
+
+    async def get_saved_arts(self,
+                             user_id: int,
+                             offset: int | None = None,
+                             limit: int | None = None,
+                             include_tags: bool = False
+                             ) -> list["ArtEntity"]:
+
+        try:
+            # noinspection PyTypeChecker
+            saved_arts: list["UsersToSavesEntity"] = await self.repo.find_all(
+                filter_by={"user_id": user_id},
+                offset=offset,
+                limit=limit,
+            )
+            if not saved_arts:
+                logger.info(f"saved_arts is empty -> raise ArtNotFoundHTTPException")
+                raise ArtNotFoundHTTPException
+            saved_arts_id: list = [i.art_id for i in saved_arts]
+            art_attributes: list[str] | None = None
+            if include_tags:
+                art_attributes = ["tags"]
+            # noinspection PyTypeChecker
+            result_arts: list["ArtEntity"] = await self.art_repo.find_all(
+                filter_by={"id": saved_arts_id},
+                joined_attributes=art_attributes,
+            )
+        except SQLAlchemyError as err:
+            logger.error(f"Error: {err}")
+            raise InternalServerErrorHTTPException from err
+        return result_arts
 
     async def delete_from_saved(self, user_id: int, art_id: int) -> bool:
         """
