@@ -2,11 +2,13 @@ from repositories.arts import ArtRepository
 from repositories.tags import TagRepository
 from repositories.users_to_saves import UsersToSavesRepository
 from repositories.users_to_likes import UsersToLikesRepository
+from repositories.comments import CommentsRepository
 
 from services.arts import ArtsService
 from services.tags import TagsService
 from services.users_to_saves import UsersToSavesService
 from services.users_to_likes import UsersToLikesService
+from services.comments import CommentsService
 
 
 def get_arts_service() -> "ArtsService":
@@ -27,5 +29,12 @@ def get_users_to_saves_service() -> "UsersToSavesService":
 def get_users_to_likes_servcie() -> "UsersToLikesService":
     return UsersToLikesService(
         users_to_likes_repo=UsersToLikesRepository(),
+        art_repo=ArtRepository(),
+    )
+
+
+def get_comments_service() -> "CommentsService":
+    return CommentsService(
+        comments_repo=CommentsRepository(),
         art_repo=ArtRepository(),
     )

@@ -98,7 +98,7 @@ class ArtsService:
         art_url_dt: datetime = datetime.now(tz=timezone.utc)
         art_url_dt: datetime = art_url_dt.replace(tzinfo=None)
         art_to_create_data: "ArtCreateSchema" = ArtCreateSchema(
-            **art_data.dict(),
+            **art_data.model_dump(),   # todo: check for bags
             **{"url": art_url, "blob_name": blob_name, "url_generated_at": art_url_dt}
         )
         logger.debug(f"art_to_create_data: {art_to_create_data}")
