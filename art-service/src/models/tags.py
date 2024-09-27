@@ -15,8 +15,8 @@ class TagOrm(Base):
     arts: M[int] = relationship("ArtOrm", secondary="arts_to_tags", back_populates="tags")
 
     def to_entity(self) -> "TagEntity":
-        result: "TagEntity" = TagEntity(
+        tag_entity: "TagEntity" = TagEntity(
             id=self.id,
             name=self.name,
         )
-        return result
+        return tag_entity

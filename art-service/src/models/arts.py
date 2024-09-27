@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 class ArtOrm(Base):
-    __tablename__ = 'arts'
+    __tablename__ = "arts"
 
     id: M[int] = mc(primary_key=True)
     user_id: M[int]
