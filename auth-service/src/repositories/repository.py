@@ -26,19 +26,30 @@ class SQLAlchemyRepository(AbstractRepository):
         async with db_manager.async_session_maker() as session:
             async with session.begin():
                 stmt: Insert = insert(self.model).values(**data).returning(self.model.id)
+                logger.debug(f"Executing insert for {self.model.__name__} with data: {data}")
                 result: ChunkedIteratorResult = await session.execute(stmt)
-                result: int = result.scalar_one()
-                return result
+                new_id: int = result.scalar_one()
+                logger.info(f"Successfully added {self.model.__name__} with id: {new_id}")
+                return new_id
 
     async def find_all(self, filter_by: dict = None) -> list:
         async with db_manager.async_session_maker() as session:
             stmt: Select = select(self.model)
             if filter_by:
-                # noinspection PyTypeChecker
-                conditions: list[BinaryExpression] = [getattr(self.model, key) == value for key, value in filter_by.items()]
+                conditions: list[BinaryExpression] = []
+                logger.debug(f"Filtering {self.model.__name__} with conditions: {filter_by}")
+                for key, value in filter_by.items():
+                    if hasattr(self.model, key):
+                        if isinstance(value, list):
+                            expression: "BinaryExpression" = getattr(self.model, key).in_(value)
+                        else:
+                            # noinspection PyTypeChecker
+                            expression: "BinaryExpression" = getattr(self.model, key) == value
+                        conditions.append(expression)
                 if conditions:
-                    stmt: Select = stmt.where(and_(*conditions))
+                    stmt = stmt.where(and_(*conditions))
 
             result: ChunkedIteratorResult = await session.execute(stmt)
-            result: list = [row[0].to_entity() for row in result.all()]
-            return result
+            entities: list = [row[0].to_entity() for row in result.all()]
+            logger.info(f"Retrieved {len(entities)} records from {self.model.__name__}")
+            return entities
