@@ -26,7 +26,6 @@ class RmqRpcServer:
     async def connect(self):
         while True:
             try:
-                logger.info("Connecting to RabbitMQ...")
                 self.connection = await connect(
                     url=settings.rmq.get_connection_url(),
                     client_properties={"heartbeat": 120}
@@ -34,7 +33,6 @@ class RmqRpcServer:
                 self.channel = await self.connection.channel()
                 self.exchange = self.channel.default_exchange
                 self.queue = await self.channel.declare_queue(name=self.queue_name)
-                logger.info("Connected to RabbitMQ and queue declared successfully.")
                 break
             except AMQPException as err:
                 logger.critical(f"Critical error during RabbitMQ connection: {err}", exc_info=True)

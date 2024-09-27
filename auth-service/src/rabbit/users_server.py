@@ -30,6 +30,7 @@ async def _run_users_rpc_server() -> None:
     users_rpc_server: UsersRpcServer = UsersRpcServer()
     try:
         await users_rpc_server.connect()
+        logger.info("UsersRpcServer connected to RabbitMQ and queue declared successfully.")
         await users_rpc_server.process_messages()
     except (AMQPException, Exception) as err:
         logger.error(f"error: {err}")

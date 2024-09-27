@@ -42,6 +42,7 @@ async def _run_jwt_rpc_server() -> None:
     jwt_rpc_server: "JwtRpcServer" = JwtRpcServer()
     try:
         await jwt_rpc_server.connect()
+        logger.info("JwtRpcServer connected to RabbitMQ and queue declared successfully.")
         await jwt_rpc_server.process_messages()
     except (AMQPException, PyJWTError, Exception) as err:
         logger.error(f"error: {err}")
