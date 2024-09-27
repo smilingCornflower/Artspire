@@ -35,5 +35,3 @@ class ArtEntity(BaseEntity):
 class UsersToSavesEntity(BaseEntity):
     user_id: int
     art_id: int
-
-

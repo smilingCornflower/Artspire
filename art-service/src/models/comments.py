@@ -1,6 +1,3 @@
-# id, user_id, art_id, text, likes_count, dislikes_count
-# is_edited, published_dt, parent_id
-
 from sqlalchemy.orm import Mapped as M
 from sqlalchemy.orm import mapped_column as mc
 from sqlalchemy import ForeignKey, String, DateTime, func

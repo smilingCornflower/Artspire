@@ -1,4 +1,4 @@
-from .rpc_client import run_rpc_client, RmqRpcClient
+from .rpc_client import run_rpc_client
 import json
 from config import logger
 from exceptions.http_exc import InternalServerErrorHTTPException

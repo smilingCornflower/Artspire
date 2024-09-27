@@ -1,8 +1,11 @@
 from repositories.comments import CommentsRepository
 from repositories.arts import ArtRepository
-from schemas.comments import CommentCreateSchema
+from schemas.comments import CommentCreateSchema, CommentEntity
 from sqlalchemy.exc import SQLAlchemyError
 from config import logger
+from rabbit.users_client import run_users_client
+
+
 from exceptions.http_exc import (
     InternalServerErrorHTTPException,
     ArtNotFoundHTTPException,
@@ -55,3 +58,46 @@ class CommentsService:
             raise InternalServerErrorHTTPException("Failed to publish the comment") from err
 
         return result
+
+    async def get_comments(self,
+                           art_id: int,
+                           offset: int | None = None,
+                           limit: int | None = None,
+                           ) -> list:
+        """
+        Retrieves comments associated with a specific art piece.
+
+        This method fetches comments from the repository based on the provided art ID.
+        It supports pagination through the offset and limit parameters.
+
+        :param art_id: The ID of the art piece for which comments are being retrieved.
+        :param offset: The number of comments to skip before starting to collect the result set.
+        :param limit: The maximum number of comments to return.
+        :return: A list of dicts, every dict contains full information about the comment.
+        :raises InternalServerErrorHTTPException: If a database error occurs while retrieving comments.
+        """
+        try:
+            # noinspection PyTypeChecker
+            result_comments: list["CommentEntity"] = await self.repo.find_all(
+                filter_by={"art_id": art_id},
+                offset=offset,
+                limit=limit,
+            )
+            users_id: set = set([comment.user_id for comment in result_comments])
+            users_info: list[dict] = await run_users_client(users_id=users_id)
+        except SQLAlchemyError as err:
+            raise InternalServerErrorHTTPException from err
+
+        result: list = []
+
+        for comment in result_comments:
+            user_info: dict = [user for user in users_info if user["id"] == comment.user_id][0]
+            comment_info: dict = comment.model_dump()
+            comment_info["user_username"] = user_info["username"]
+            comment_info["user_profile_image"] = user_info["profile_image"]
+
+            comment_info.pop("art_id")
+            result.append(comment_info)
+
+        return result
+
