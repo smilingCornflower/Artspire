@@ -2,13 +2,19 @@
 logs/
 secrets
 
+.gitignore
 *.log
 *.yaml
 *.yml
 *.pem
+jwt-private.pem
+jwt-public.pem
 bucket-credentials.json
 
 venv
 .venv
 tempo.py
 my_actions.txt
+tasks.py
+tempo.py
+rows_count.py
