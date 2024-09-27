@@ -27,7 +27,10 @@ class RmqRpcServer:
         while True:
             try:
                 logger.info("Connecting to RabbitMQ...")
-                self.connection = await connect(url=settings.rmq.get_connection_url())
+                self.connection = await connect(
+                    url=settings.rmq.get_connection_url(),
+                    client_properties={"heartbeat": 120}
+                )
                 self.channel = await self.connection.channel()
                 self.exchange = self.channel.default_exchange
                 self.queue = await self.channel.declare_queue(name=self.queue_name)
