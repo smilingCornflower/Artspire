@@ -37,12 +37,3 @@ class UsersToSavesEntity(BaseEntity):
     art_id: int
 
 
-class CommentEntity(BaseEntity):
-    id: int
-    user_id: int
-    art_id: int
-    text: str
-    likes_count: int
-    dislikes_count: int
-    is_edited: bool
-    created_at: datetime

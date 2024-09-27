@@ -6,7 +6,7 @@ from sqlalchemy.orm import mapped_column as mc
 from sqlalchemy import ForeignKey, String, DateTime, func
 from database.base import Base
 
-from schemas.entities import CommentEntity
+from schemas.comments import CommentEntity
 from datetime import datetime
 
 
