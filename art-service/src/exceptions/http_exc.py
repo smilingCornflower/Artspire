@@ -63,3 +63,11 @@ class ArtAlreadySavedHTTPException(HTTPException):
             status_code=status.HTTP_409_CONFLICT,
             detail=detail,
         )
+
+
+class CommentLengthHTTPException(HTTPException):
+    def __init__(self, detail: str = "Comment length should be more than 0 and less than 512"):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=detail,
+        )
