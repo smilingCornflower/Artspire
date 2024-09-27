@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from rabbit.jwt_server import jwt_server
+from rabbit.users_server import users_server
 from api.router import router as auth_router
 from contextlib import asynccontextmanager
 from config import logger
@@ -12,9 +13,11 @@ from config import logger
 
 @asynccontextmanager
 async def async_lifespan(app_name: FastAPI):
-    app.jwt_task = asyncio.create_task(jwt_server())
+    app.jwt_rpc_task = asyncio.create_task(jwt_server())
+    app.users_rpc_task = asyncio.create_task(users_server())
     yield
-    app.jwt_task.cancel()
+    app.jwt_rpc_task.cancel()
+    app.users_rpc_task.cancel()
 
 
 app = FastAPI(
