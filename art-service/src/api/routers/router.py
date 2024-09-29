@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, UploadFile
 
-from schemas.arts import ArtUploadSchema
+from schemas.arts import ArtUploadSchema, ArtEntity
 from schemas.entities import UserEntity
 
 from api.dependencies import (
@@ -18,14 +18,14 @@ from typing import Annotated
 
 if TYPE_CHECKING:
     from services.arts import ArtsService
-    from schemas.entities import ArtEntity
 
 router = APIRouter(
     prefix="/arts",
 )
 
 
-@router.get("", description=description_get_arts, tags=["arts"])
+@router.get("", description=description_get_arts, tags=["arts"],
+            response_model=list[ArtEntity])
 async def get_arts(
         art_id: int | None = None,
         offset: int | None = None,
@@ -42,7 +42,8 @@ async def get_arts(
     return one_or_all_arts
 
 
-@router.post("", description=description_post_art, tags=["arts"], status_code=201)
+@router.post("", description=description_post_art, tags=["arts"],
+             response_model=int, status_code=201)
 async def post_art(
         art_file: UploadFile,
         art_upload_data: Annotated["ArtUploadSchema", Depends(get_art_upload_data)],
@@ -52,7 +53,8 @@ async def post_art(
     return new_art_id
 
 
-@router.delete("", description=description_delete_art, tags=["arts"])
+@router.delete("", description=description_delete_art,
+               response_model=bool, tags=["arts"])
 async def delete_art(
         art_id: int,
         user_data: "UserEntity" = Depends(get_user_data),
