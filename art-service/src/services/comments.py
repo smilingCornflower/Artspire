@@ -1,6 +1,7 @@
 from repositories.comments import CommentsRepository
 from repositories.arts import ArtRepository
-from schemas.comments import CommentCreateSchema, CommentEntity
+from schemas.comments import CommentCreateSchema, CommentEntity, CommentOutSchema
+from schemas.entities import UserEntity
 from sqlalchemy.exc import SQLAlchemyError
 from config import logger
 from rabbit.users_client import run_users_client
@@ -65,17 +66,19 @@ class CommentsService:
                            limit: int | None = None,
                            ) -> list:
         """
-        Retrieves comments associated with a specific art piece.
+        Retrieve comments associated with a specific art piece.
 
         This method fetches comments from the repository based on the provided art ID.
-        It supports pagination through the offset and limit parameters.
+        It supports pagination via the `offset` and `limit` parameters.
 
         :param art_id: The ID of the art piece for which comments are being retrieved.
-        :param offset: The number of comments to skip before starting to collect the result set.
-        :param limit: The maximum number of comments to return.
-        :return: A list of dicts, every dict contains full information about the comment.
-        :raises InternalServerErrorHTTPException: If a database error occurs while retrieving comments.
+        :param offset: The number of comments to skip before starting to collect the result set (optional).
+        :param limit: The maximum number of comments to return (optional).
+        :return: A list of CommentOutSchema objects containing full information about each comment.
+        :raises InternalServerErrorHTTPException: If an error occurs while retrieving comments from the database.
         """
+
+        logger.info(f"Fetching comments; art_id={art_id} with offset={offset} and limit={limit}")
         try:
             # noinspection PyTypeChecker
             result_comments: list["CommentEntity"] = await self.repo.find_all(
@@ -83,21 +86,33 @@ class CommentsService:
                 offset=offset,
                 limit=limit,
             )
-            users_id: set = set([comment.user_id for comment in result_comments])
-            users_info: list[dict] = await run_users_client(users_id=users_id)
+            logger.info(f"Retrieved {len(result_comments)} comments for art_id={art_id}.")
+            users_id: list = [comment.user_id for comment in result_comments]
+
+            # !! The result user_entities ignores duplicates of user_id
+            user_entities: dict[int, "UserEntity"] = await run_users_client(users_id=users_id)
+            logger.debug(f"Retrieved user entities for {len(user_entities)} users.")
+
         except SQLAlchemyError as err:
+            logger.error(f"Error while fetching comments for art_id={art_id}: {err}")
             raise InternalServerErrorHTTPException from err
 
         result: list = []
 
         for comment in result_comments:
-            user_info: dict = [user for user in users_info if user["id"] == comment.user_id][0]
-            comment_info: dict = comment.model_dump()
-            comment_info["user_username"] = user_info["username"]
-            comment_info["user_profile_image"] = user_info["profile_image"]
+            user: "UserEntity" = user_entities[comment.user_id]
+            comment_out: "CommentOutSchema" = CommentOutSchema(
+                id=comment.id,
+                user_id=comment.user_id,
+                user_username=user.username,
+                user_profile_image=user.profile_image,
+                text=comment.text,
+                likes_count=comment.likes_count,
+                dislikes_count=comment.dislikes_count,
+                is_edited=comment.is_edited,
+                created_at=comment.created_at
+            )
+            result.append(comment_out)
 
-            comment_info.pop("art_id")
-            result.append(comment_info)
-
+        logger.info(f"Returning {len(result)} comments for art_id={art_id}.")
         return result
-

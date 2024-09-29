@@ -24,3 +24,16 @@ class CommentCreateSchema(CommentUploadSchema):
 
     class Config:
         extra = "forbid"
+
+
+class CommentOutSchema(BaseModel):
+    id: int
+    user_id: int
+    user_username: str
+    user_profile_image: str | None
+    text: str
+    likes_count: int
+    dislikes_count: int
+    is_edited: bool
+    created_at: datetime
+

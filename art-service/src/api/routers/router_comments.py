@@ -7,12 +7,13 @@ from api.descriptions.comment_descr import (
     description_post_comment,
     description_get_comments,
 )
-from schemas.comments import CommentUploadSchema, CommentCreateSchema
+from schemas.comments import CommentUploadSchema, CommentCreateSchema, CommentOutSchema
 from schemas.entities import UserEntity
 from services.comments import CommentsService
 
 
-@router.post("/comments", tags=["comments"], description=description_post_comment, status_code=201)
+@router.post("/comments", tags=["comments"], description=description_post_comment,
+             response_model=int, status_code=201)
 async def post_comment(
         comment_data: CommentUploadSchema,
         comments_service: Annotated["CommentsService", Depends(get_comments_service)],
@@ -27,13 +28,14 @@ async def post_comment(
     return comment_id
 
 
-@router.get("/comments/{art_id}", tags=["comments"], description=description_get_comments)
+@router.get("/comments/{art_id}", tags=["comments"], description=description_get_comments,
+            response_model=list[CommentOutSchema])
 async def get_comments(
         art_id: int,
         comments_service: Annotated["CommentsService", Depends(get_comments_service)],
         offset: int | None = None,
         limit: int | None = None,
-) -> list:
+) -> list["CommentOutSchema"]:
     result_comments = await comments_service.get_comments(
         art_id=art_id,
         offset=offset,
