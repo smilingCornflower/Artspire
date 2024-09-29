@@ -77,8 +77,6 @@ class SQLAlchemyRepository(AbstractRepository):
             if joined_attributes:
                 for attr in joined_attributes:
                     stmt: "Select" = stmt.options(joinedload(getattr(self.model, attr)))
-            logger.debug(f"stmt: {stmt}")
-            logger.debug(f"offset: {offset}, limit: {limit}")
             if offset is not None and limit is not None:
                 stmt: "Select" = stmt.offset(offset).limit(limit)
 
@@ -94,6 +92,7 @@ class SQLAlchemyRepository(AbstractRepository):
                         conditions.append(expression)
                 if conditions:
                     stmt = stmt.where(and_(*conditions))
+            logger.debug(f"stmt: {stmt}")
             try:
                 result: "ChunkedIteratorResult" = await session.execute(stmt)
             except SQLAlchemyError as err:

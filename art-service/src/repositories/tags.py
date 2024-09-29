@@ -5,15 +5,16 @@ from typing import TYPE_CHECKING
 from config import logger
 from sqlalchemy import select, func
 from sqlalchemy.exc import SQLAlchemyError
-from schemas.entities import BaseEntity
+
 if TYPE_CHECKING:
     from sqlalchemy import Select, Result
+    from schemas.entities import TagEntity
 
 
 class TagRepository(SQLAlchemyRepository):
     model = TagOrm
 
-    async def get_tags_by_name_part(self, tag_part: str):
+    async def get_tags_by_name_part(self, tag_part: str) -> list["TagEntity"]:
         logger.debug(f"Selecting from {self.model.__name__} with tag_part: {tag_part}")
         async with db_manager.async_session_maker() as session:
             tag_part: str = tag_part + "%"
@@ -30,6 +31,7 @@ class TagRepository(SQLAlchemyRepository):
                 logger.error(f"SQLAlchemyError: {err}")
                 raise err
             rows = result.all()
-            entities: "list[BaseEntity]" = [row[0].to_entity() for row in rows]
+
+            entities: "list[TagEntity]" = [row[0].to_entity() for row in rows]
             logger.info(f"Found {len(entities)} entities")
             return entities
