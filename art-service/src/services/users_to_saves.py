@@ -9,7 +9,8 @@ from .arts import ArtsService
 if TYPE_CHECKING:
     from repositories.users_to_saves import UsersToSavesRepository
     from repositories.arts import ArtRepository
-    from schemas.entities import ArtEntity, UsersToSavesEntity
+    from schemas.entities import UsersToSavesEntity
+    from schemas.arts import ArtEntity
 
 
 class UsersToSavesService(ArtsService):

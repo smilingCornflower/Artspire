@@ -64,18 +64,20 @@ class ArtRepository(SQLAlchemyRepository):
                 raise
         return new_art_id
 
-    async def alter_likes(self, art_id: int, number: int):
+    async def change_counter(self, art_id: int, number: int, counter_name: str):
         async with db_manager.async_session_maker() as session:
             async with session.begin():
                 try:
                     # noinspection PyTypeChecker
-                    stmt: "Update" = (update(self.model)
-                            .where(self.model.id == art_id)
-                            .values(likes_count=self.model.likes_count + number)
-                            )
+                    stmt: "Update" = update(self.model).where(self.model.id == art_id)
+                    if counter_name == "likes":
+                        stmt: "Update" = stmt.values(likes_count=self.model.likes_count + number)
+                    elif counter_name == "views":
+                        stmt: "Update" = stmt.values(views_count=self.model.views_count + number)
+                    else:
+                        raise ValueError(f"Invalid counter name: {counter_name}")
                     result: "CursorResult" = await session.execute(stmt)
                     return result.rowcount
-
                 except SQLAlchemyError as err:
-                    logger.error(f"Error: {err}")
+                    logger.critical(f"Critical Error: {err}")
                     raise err

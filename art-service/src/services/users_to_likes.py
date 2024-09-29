@@ -7,7 +7,7 @@ from config import logger
 if TYPE_CHECKING:
     from repositories.users_to_likes import UsersToLikesRepository
     from repositories.arts import ArtRepository
-    from schemas.entities import ArtEntity
+    from schemas.arts import ArtEntity
 
 
 class UsersToLikesService:
@@ -44,7 +44,7 @@ class UsersToLikesService:
 
         if result_rowcount > 0:
             try:
-                liked_rowcount: int = await self.art_repo.alter_likes(art_id=art_id, number=1)
+                liked_rowcount: int = await self.art_repo.change_counter(art_id, 1, "likes")
                 logger.debug(f"liked_rowcount: {liked_rowcount}")
             except SQLAlchemyError as err:
                 raise InternalServerErrorHTTPException from err
@@ -62,7 +62,7 @@ class UsersToLikesService:
         result_rows: int = await self.repo.delete_one(to_delete)
         if result_rows > 0:
             try:
-                disliked_rowcount: int = await self.art_repo.alter_likes(art_id=art_id, number=-1)
+                disliked_rowcount: int = await self.art_repo.change_counter(art_id, -1, "likes")
                 logger.debug(f"disliked_rowcount: {disliked_rowcount}")
             except SQLAlchemyError as err:
                 raise InternalServerErrorHTTPException from err
