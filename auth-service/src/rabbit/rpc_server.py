@@ -28,7 +28,10 @@ class RmqRpcServer:
             try:
                 self.connection = await connect(
                     url=settings.rmq.get_connection_url(),
-                    client_properties={"heartbeat": 120}
+                    client_properties={
+                        "heartbeat": settings.rmq.heartbeat,
+                        "expiration": str(settings.rmq.timeout_seconds * 1000)
+                    }
                 )
                 self.channel = await self.connection.channel()
                 self.exchange = self.channel.default_exchange
