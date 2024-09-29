@@ -7,11 +7,12 @@ from sqlalchemy import (
     Integer,
     DateTime,
     func,
+    text,
 )
 from sqlalchemy.exc import MissingGreenlet
 from database.base import Base
 from datetime import datetime
-from schemas.entities import ArtEntity
+from schemas.arts import ArtEntity
 from config import logger
 from typing import TYPE_CHECKING
 
@@ -23,13 +24,15 @@ class ArtOrm(Base):
     __tablename__ = "arts"
 
     id: M[int] = mc(primary_key=True)
-    user_id: M[int]
+    user_id: M[int] = mc(nullable=False)
     blob_name: M[str] = mc(String(length=128), unique=True, nullable=False)
     url: M[str] = mc(String(length=2048), unique=True, index=True, nullable=False)
     url_generated_at: M[datetime]
 
     title: M[str] = mc(String(length=256), nullable=True)
-    likes_count: M[int] = mc(default=0)
+
+    likes_count: M[int] = mc(default=0, server_default=text("0"), nullable=False)
+    views_count: M[int] = mc(default=0, server_default=text("0"), nullable=False)
 
     tags = relationship("TagOrm", secondary="arts_to_tags", back_populates="arts")
 
