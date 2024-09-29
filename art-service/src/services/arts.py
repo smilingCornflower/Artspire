@@ -9,7 +9,7 @@ from google.cloud.exceptions import GoogleCloudError
 from sqlalchemy.exc import SQLAlchemyError
 
 # Local modules
-from schemas.arts import ArtCreateSchema, ArtUploadSchema
+from schemas.arts import ArtCreateSchema, ArtUploadSchema, ArtEntity
 from bucket.s3_service import s3_service
 from exceptions.http_exc import (
     ArtNotFoundHTTPException,
@@ -19,7 +19,6 @@ from config import logger
 
 if TYPE_CHECKING:
     from repositories.arts import ArtRepository
-    from schemas.entities import ArtEntity
     from fastapi import UploadFile
 
 
@@ -41,7 +40,6 @@ class ArtsService:
         :param art: The art entity to check and potentially update.
         :return: The updated art entity if the URL was refreshed.
         """
-        logger.info("Started _refresh_art_url_if_needed()")
         generated_at_dt: datetime = art.url_generated_at
         current_dt: datetime = datetime.now(tz=timezone.utc)
         # With tzinfo it raises exceptions, IDK why, just don't touch it.
@@ -69,6 +67,9 @@ class ArtsService:
             logger.info("Finished _refresh_art_url_if_needed()")
             return new_art
         return art
+
+    async def _increase_views_count(self, art_id: int) -> None:
+        await self.art_repo.change_counter(art_id, number=1, counter_name="views")
 
     async def add_art(self,
                       art_data: "ArtUploadSchema",
@@ -130,9 +131,9 @@ class ArtsService:
         raises InternalServerErrorHTTPException: If there is an error.
         """
         logger.warning(f"Started get_arts()")
-
         if art_id:
             filter_condition: dict = {"id": art_id}
+            await self._increase_views_count(art_id)
         else:
             filter_condition: dict = {}
         try:
