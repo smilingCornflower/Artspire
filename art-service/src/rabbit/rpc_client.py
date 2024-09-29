@@ -4,6 +4,8 @@ import uuid
 from aio_pika import connect, Message
 from aio_pika.exceptions import AMQPException
 from abc import ABC
+
+import config
 from config import settings, logger
 from typing import TYPE_CHECKING
 
@@ -30,7 +32,12 @@ class RmqRpcClient:
     async def connect(self) -> "Self":
         try:
             logger.info("Connecting to RabbitMQ...")
-            self.connection = await connect(url=settings.rmq.get_connection_url())
+            self.connection = await connect(
+                url=settings.rmq.get_connection_url(),
+                client_properties={
+                    "expiration": str(settings.rmq.timeout_seconds * 1000),
+                }
+            )
             self.channel = await self.connection.channel()
             self.callback_queue = await self.channel.declare_queue(exclusive=True)
             await self.callback_queue.consume(callback=self.on_response)
@@ -64,7 +71,7 @@ class RmqRpcClient:
                 Message(
                     body=call_body.encode(),
                     correlation_id=self.correlation_id,
-                    reply_to=self.callback_queue.name,
+                    reply_to=self.callback_queue.name
                 ),
                 routing_key=routing_key,
             )

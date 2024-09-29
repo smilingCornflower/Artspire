@@ -22,6 +22,7 @@ class RMQConfig(BaseModel):
     user: str
     password: str
     prefetch_count: int = 50
+    timeout_seconds: int = 10
 
     def get_connection_url(self) -> str:
         return f"amqp://{self.user}:{self.password}@{self.host}:{self.port}/"
