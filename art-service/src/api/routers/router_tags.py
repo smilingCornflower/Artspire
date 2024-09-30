@@ -1,8 +1,12 @@
 from fastapi import Depends, Body
 
 from api.dependencies import get_tags_service, get_user_data
-from api.descriptions.tag_descrs import description_get_tags, description_post_tag, \
-    description_delete_tag
+from api.descriptions.tag_descrs import (
+    description_get_tags,
+    description_post_tag,
+    description_delete_tag,
+    description_search_tag,
+)
 from api.routers.router import router
 from exceptions.http_exc import ForbiddenHTTPException
 from schemas.entities import UserEntity, TagEntity
@@ -22,7 +26,7 @@ async def get_tags(
 @router.post("/tags", description=description_post_tag, tags=["tags"],
              response_model=int, status_code=201)
 async def post_tag(
-        tag_name: Annotated[str, Body(..., embed=True)],
+        tag_name: Annotated[str, Body(..., embed=True, min_length=2, max_length=30)],
         tag_service: Annotated["TagsService", Depends(get_tags_service)],
         user_data: "UserEntity" = Depends(get_user_data),
 ) -> int:
@@ -45,7 +49,7 @@ async def delete_tag(
     return tag_delete_result
 
 
-@router.get("/tags/search", tags=["tags"],
+@router.get("/tags/search", tags=["tags"], description=description_search_tag,
             response_model=list[TagEntity])
 async def search_tag(
         tag_part: str,

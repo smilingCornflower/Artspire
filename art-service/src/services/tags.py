@@ -43,5 +43,5 @@ class TagsService:
         return all_tags
 
     async def tag_search(self, tag_part: str) -> list["TagEntity"]:
-        result_tags: list["TagEntity"] = await self.tag_repo.get_tags_by_name_part(tag_part=tag_part)
+        result_tags: list["TagEntity"] = await self.tag_repo.get_tags_by_name_part(tag_part)
         return result_tags
