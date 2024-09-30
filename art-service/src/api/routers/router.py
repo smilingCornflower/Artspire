@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, UploadFile
+from fastapi import APIRouter, Depends, UploadFile, Body
 
 from schemas.arts import ArtUploadSchema, ArtEntity
 from schemas.entities import UserEntity
@@ -56,7 +56,7 @@ async def post_art(
 @router.delete("", description=description_delete_art,
                response_model=bool, tags=["arts"])
 async def delete_art(
-        art_id: int,
+        art_id: int = Body(..., embed=True),
         user_data: "UserEntity" = Depends(get_user_data),
         art_service: "ArtsService" = Depends(get_arts_service),
 ) -> bool:

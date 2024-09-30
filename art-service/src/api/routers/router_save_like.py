@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Body
 
 from api.dependencies import get_user_data, get_users_to_saves_service, get_users_to_likes_servcie
 from api.descriptions.user_like_descrs import (
@@ -17,7 +17,7 @@ from services.users_to_saves import UsersToSavesService
 @router.post("/save", description=description_post_user_like, tags=["user_saves"],
              response_model=bool, status_code=201)
 async def post_user_save(
-        art_id: int,
+        art_id: Annotated[int, Body(..., embed=True)],
         user_data: Annotated["UserEntity", Depends(get_user_data)],
         users_saves_service: Annotated["UsersToSavesService", Depends(get_users_to_saves_service)],
 ) -> bool:
@@ -46,7 +46,7 @@ async def get_user_saves(
 @router.delete("/save", description=description_delete_user_like,
                response_model=bool, tags=["user_saves"])
 async def delete_user_save(
-        art_id: int,
+        art_id: Annotated[int, Body(..., embed=True)],
         user_data: Annotated["UserEntity", Depends(get_user_data)],
         users_to_saves_service: Annotated[
             "UsersToSavesService", Depends(get_users_to_saves_service)],
@@ -60,7 +60,7 @@ async def delete_user_save(
 
 @router.post("/like", tags=["user_likes"], response_model=bool, status_code=201)
 async def post_user_like(
-        art_id: int,
+        art_id: Annotated[int, Body(..., embed=True)],
         user_data: Annotated["UserEntity", Depends(get_user_data)],
         user_to_likes_servcie: Annotated[
             "UsersToLikesService", Depends(get_users_to_likes_servcie)
@@ -72,7 +72,7 @@ async def post_user_like(
 
 @router.delete("/like", tags=["user_likes"], response_model=bool)
 async def delete_user_like(
-        art_id: int,
+        art_id: Annotated[int, Body(..., embed=True)],
         user_data: Annotated["UserEntity", Depends(get_user_data)],
         users_to_saves_service: Annotated[
             "UsersToLikesService", Depends(get_users_to_likes_servcie)

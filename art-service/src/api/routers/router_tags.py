@@ -1,4 +1,4 @@
-from fastapi import Depends
+from fastapi import Depends, Body
 
 from api.dependencies import get_tags_service, get_user_data
 from api.descriptions.tag_descrs import description_get_tags, description_post_tag, \
@@ -22,7 +22,7 @@ async def get_tags(
 @router.post("/tags", description=description_post_tag, tags=["tags"],
              response_model=int, status_code=201)
 async def post_tag(
-        tag_name: str,
+        tag_name: Annotated[str, Body(..., embed=True)],
         tag_service: Annotated["TagsService", Depends(get_tags_service)],
         user_data: "UserEntity" = Depends(get_user_data),
 ) -> int:
@@ -35,7 +35,7 @@ async def post_tag(
 @router.delete("/tags", description=description_delete_tag,
                response_model=bool, tags=["tags"])
 async def delete_tag(
-        tag_id: int,
+        tag_id: Annotated[int, Body(..., embed=True)],
         tag_service: Annotated["TagsService", Depends(get_tags_service)],
         user_data: "UserEntity" = Depends(get_user_data),
 ) -> bool:
