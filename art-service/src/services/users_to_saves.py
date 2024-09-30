@@ -59,8 +59,8 @@ class UsersToSavesService(ArtsService):
                 limit=limit,
             )
             if not saved_arts:
-                logger.info(f"saved_arts is empty -> raise ArtNotFoundHTTPException")
-                raise ArtNotFoundHTTPException
+                logger.info(f"saved_arts is empty -> return []")
+                return []
             saved_arts_id: list = [i.art_id for i in saved_arts]
             art_attributes: list[str] | None = None
             if include_tags:

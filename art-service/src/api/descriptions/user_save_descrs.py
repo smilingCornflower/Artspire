@@ -10,7 +10,6 @@ description_get_user_saves: str = """
 **Returns:**
 - **200 OK**: Success, returns a list of saved art.
 - **401 Unauthorized**: If the user is not authorized, you should provide jwt in headers to authorize
-- **404 Not Found**: If no saved art are found for the user.
 - **500 Internal Server Error**: If an unexpected server error occurs during the retrieval process.
 
 **Authentication Required:**
