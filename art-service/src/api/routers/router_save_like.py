@@ -6,6 +6,9 @@ from api.dependencies import get_user_data, get_users_to_saves_service, get_user
 from api.descriptions.user_save_descrs import (
     description_get_user_saves, description_post_user_save, description_delete_user_save,
 )
+from api.descriptions.user_like_descrs import (
+    description_post_user_like, description_delete_user_like
+)
 from api.routers.router import router
 from schemas.entities import UserEntity
 from schemas.arts import ArtEntity
@@ -57,7 +60,8 @@ async def delete_user_save(
     return result
 
 
-@router.post("/like", tags=["user_likes"], response_model=bool, status_code=201)
+@router.post("/like", tags=["user_likes"], description=description_post_user_like,
+             response_model=bool, status_code=201)
 async def post_user_like(
         art_id: Annotated[int, Body(..., embed=True)],
         user_data: Annotated["UserEntity", Depends(get_user_data)],
@@ -69,7 +73,8 @@ async def post_user_like(
     return result
 
 
-@router.delete("/like", tags=["user_likes"], response_model=bool)
+@router.delete("/like", tags=["user_likes"], description=description_delete_user_like,
+               response_model=bool)
 async def delete_user_like(
         art_id: Annotated[int, Body(..., embed=True)],
         user_data: Annotated["UserEntity", Depends(get_user_data)],

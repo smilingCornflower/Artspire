@@ -1,6 +1,6 @@
 description_get_user_saves: str = """
 **Description**
-- Retrieves a list of artworks saved by the user. Supports pagination and the option to include associated tags for each artwork.
+- Retrieves a list of art saved by the user. Supports pagination and the option to include associated tags for each artwork.
 
 **Parameters:**  
 - **offset**: Optional integer. The number of items to skip before starting to return results.
@@ -8,9 +8,9 @@ description_get_user_saves: str = """
 - **include_tags**: Optional boolean. If True, includes tags associated with each artwork in the response.
 
 **Returns:**
-- **200 OK**: Success, returns a list of saved artworks.
+- **200 OK**: Success, returns a list of saved art.
 - **401 Unauthorized**: If the user is not authorized, you should provide jwt in headers to authorize
-- **404 Not Found**: If no saved artworks are found for the user.
+- **404 Not Found**: If no saved art are found for the user.
 - **500 Internal Server Error**: If an unexpected server error occurs during the retrieval process.
 
 **Authentication Required:**
