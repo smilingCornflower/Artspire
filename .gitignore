@@ -1,4 +1,8 @@
 .idea
+__pycache__/
+.DS_Store
+settings.json
+
 logs/
 secrets
 
