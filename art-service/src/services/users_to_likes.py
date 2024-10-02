@@ -28,7 +28,7 @@ class UsersToLikesService:
         :raises ArtNotFoundHTTPException: If the art with the given art_id is not found.
         :raises InternalServerErrorHTTPException: If an error occurs while adding the record to the repository.
         """
-        logger.warning(f"Started like_art()")
+        logger.warning(f"STARTED like_art()")
         logger.debug(f"(user_id, art_id) = ({user_id}, {art_id})")
         # noinspection PyTypeChecker
         seeking_result: "list[ArtEntity]" = await self.art_repo.find_all({"id": art_id})

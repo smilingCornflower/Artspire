@@ -4,18 +4,21 @@ from exceptions.http_exc import ArtNotFoundHTTPException, InternalServerErrorHTT
 from sqlalchemy.exc import SQLAlchemyError
 from config import logger
 
-from .arts import ArtsService
 
 if TYPE_CHECKING:
     from repositories.users_to_saves import UsersToSavesRepository
     from repositories.arts import ArtRepository
+    from repositories.tags import TagRepository
+    from repositories.art_to_tag import ArtToTagRepository
     from schemas.entities import UsersToSavesEntity
     from schemas.arts import ArtEntity
 
 
-class UsersToSavesService(ArtsService):
-    def __init__(self, users_to_saves_repo: "UsersToSavesRepository", art_repo: "ArtRepository"):
-        super().__init__(art_repo=art_repo)
+class UsersToSavesService:
+    def __init__(self,
+                 users_to_saves_repo: "UsersToSavesRepository",
+                 art_repo: "ArtRepository",
+                 ):
         self.repo: "UsersToSavesRepository" = users_to_saves_repo
         self.art_repo: "ArtRepository" = art_repo
 
@@ -29,7 +32,7 @@ class UsersToSavesService(ArtsService):
         :raises ArtNotFoundHTTPException: If the art with the given art_id is not found.
         :raises InternalServerErrorHTTPException: If an error occurs while adding the record to the repository.
         """
-        logger.warning(f"Started save_art()")
+        logger.warning(f"STARTED save_art()")
         logger.debug(f"(user_id, art_id) = ({user_id}, {art_id})")
         # noinspection PyTypeChecker
         seeking_result: "list[ArtEntity]" = await self.art_repo.find_all({"id": art_id})

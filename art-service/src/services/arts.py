@@ -19,16 +19,25 @@ from config import logger
 
 if TYPE_CHECKING:
     from repositories.arts import ArtRepository
+    from repositories.art_to_tag import ArtToTagRepository
+    from repositories.tags import TagRepository
     from fastapi import UploadFile
+    from schemas.entities import TagEntity
 
 
 class ArtsService:
     SIX_DAYS_IN_SECONDS: int = 6 * 24 * 3600
     UNDELETED_BLOB_NAMES_FILE: str = "undeleted_blob_names.txt"
 
-    def __init__(self, art_repo: "ArtRepository"):
+    def __init__(
+        self,
+        art_repo: "ArtRepository",
+        art_to_tag_repo: "ArtToTagRepository",
+        tag_repo: "TagRepository",
+    ) -> None:
         self.art_repo = art_repo
-        logger.info(f"Initialized ArtsService with repository: {self.art_repo}")
+        self.art_to_tag_repo = art_to_tag_repo
+        self.tag_repo = tag_repo
 
     async def _refresh_art_url_if_needed(self, art: "ArtEntity") -> "ArtEntity":
         """
@@ -45,6 +54,7 @@ class ArtsService:
         # With tzinfo it raises exceptions, IDK why, just don't touch it.
         current_dt: datetime = current_dt.replace(tzinfo=None)
         dt_diff_in_seconds: float = (current_dt - generated_at_dt).total_seconds()
+
         if dt_diff_in_seconds > self.SIX_DAYS_IN_SECONDS:
             try:
                 art_new_url: str = s3_service.create_url(art.blob_name)
@@ -55,68 +65,97 @@ class ArtsService:
                 "url": art_new_url,
                 "url_generated_at": current_dt,
             }
-            new_art: "ArtEntity" = art.copy()
+            new_art: "ArtEntity" = art.model_copy()
             new_art.url = art_new_url
             new_art.url_generated_at = current_dt
-            logger.debug(f"new_art: {new_art}")
             try:
                 await self.art_repo.update_one(model_id=art.id, data=to_refresh)
             except SQLAlchemyError as err:
                 logger.error("Error: {err}")
                 raise InternalServerErrorHTTPException from err
-            logger.info("Finished _refresh_art_url_if_needed()")
             return new_art
         return art
 
     async def _increase_views_count(self, art_id: int) -> None:
         await self.art_repo.change_counter(art_id, number=1, counter_name="views")
 
-    async def add_art(self,
-                      art_data: "ArtUploadSchema",
-                      art_file: "UploadFile",
-                      ) -> int:
+    async def add_art(
+        self,
+        art_data: "ArtUploadSchema",
+        art_file: "UploadFile",
+        create_tags: bool = False,
+    ) -> int:
         """
-        Adds an artwork to the repository.
+        Adds an artwork to the repository, along with optional tag creation.
 
-        This method handles the process of uploading an image file to an S3 storage using the
-        `s3_service.upload_image()` function. If the uploaded file is not a valid image,
+        This method handles the process of uploading an image file to S3 storage using
+        `s3_service.upload_image()`. If the uploaded file is not a valid image,
         an `InvalidImageTypeHTTPException` is raised.
 
-        After successful upload, a URL to access the image is generated, which will remain active for 6 days.
-        The generated URL, along with the timestamp of its creation and other details from `art_data`,
-        are stored in the database. Finally, the ID of the newly created database entry is returned.
+        After a successful upload, the method generates a URL for accessing the image, stores it in
+        the database along with metadata from `art_data`, and returns the ID of the newly created
+        art record.
 
-        :param art_data: The data related to the artwork to be uploaded, including user ID and other metadata.
-        :param art_file: The file object representing the artwork image to be uploaded.
-        :return: The ID of the newly created artwork record in the database.
-        :raises InvalidImageTypeHTTPException: If the uploaded file is not a valid image.
-        :raises InternalServerErrorHTTPException: If there is an error during the database operation.
+        If `create_tags` is set to True, the method also handles tag creation and association of
+        tags with the artwork. It first checks if the tags already exist, creates any missing tags,
+        and links them to the newly created artwork.
+
+        param art_data: The data related to the artwork, including user ID, title, and tags.
+        param art_file: The file object representing the artwork image to be uploaded.
+        param create_tags: If True, the method will create and associate tags with the artwork.
+        return: The ID of the newly created artwork record in the database.
+        raises InvalidImageTypeHTTPException: If the uploaded file is not a valid image.
+        raises InternalServerErrorHTTPException: If there is an error during the database operation.
         """
-        logger.warning("Started add_art()")
-        blob_name: str = await s3_service.upload_image(image_file=art_file,
-                                                       user_id=art_data.user_id)
-        art_url: str = s3_service.create_url(blob_name=blob_name)
-        art_url_dt: datetime = datetime.now(tz=timezone.utc)
-        art_url_dt: datetime = art_url_dt.replace(tzinfo=None)
-        art_to_create_data: "ArtCreateSchema" = ArtCreateSchema(
-            **art_data.model_dump(),   # todo: check for bags
-            **{"url": art_url, "blob_name": blob_name, "url_generated_at": art_url_dt}
+        logger.warning("STARTED add_art()")
+        blob_name: str = await s3_service.upload_image(
+            image_file=art_file, user_id=art_data.user_id
         )
-        logger.debug(f"art_to_create_data: {art_to_create_data}")
-        try:
-            new_art_id: int = await self.art_repo.add_art(art_to_create_data, create_tags=True)
-            logger.info("Finished add_art()")
-            return new_art_id
-        except SQLAlchemyError as err:
-            logger.error(f"Error: {err}")
-            raise InternalServerErrorHTTPException from err
+        art_url: str = s3_service.create_url(blob_name=blob_name)
+        url_generated_dt: datetime = datetime.now(tz=timezone.utc)
+        url_generated_dt: datetime = url_generated_dt.replace(tzinfo=None)
 
-    async def get_arts(self,
-                       art_id: int | None = None,
-                       offset: int | None = None,
-                       limit: int | None = None,
-                       include_tags: bool = False,
-                       ) -> "list[ArtEntity]":
+        art_create_data: "ArtCreateSchema" = ArtCreateSchema(
+            user_id=art_data.user_id,
+            title=art_data.title,
+            url=art_url,
+            blob_name=blob_name,
+            url_generated_at=url_generated_dt,
+        )
+        tag_names: list[str] = art_data.tags
+        try:
+            logger.info(f"await self.art_repo.add_one(art_create_data.model_dump())")
+            new_art_id: int = await self.art_repo.add_one(art_create_data.model_dump())
+            if create_tags:
+                tag_names_to_add_data: list[dict] = [
+                    {"name": name} for name in tag_names
+                ]
+                logger.info(
+                    f"await self.tag_repo.add_one({tag_names_to_add_data}, ['name'])"
+                )
+                await self.tag_repo.add_one(
+                    data=tag_names_to_add_data, ignore_conflicts=["name"]
+                )
+
+            tag_entities: list = await self.tag_repo.find_all({"name": tag_names})
+            art_to_tag_add_data: list[dict] = [
+                {"art_id": new_art_id, "tag_id": tag_entity.id}
+                for tag_entity in tag_entities
+            ]
+            logger.info(f"await self.art_to_tag_repo.add_one({art_to_tag_add_data}")
+            await self.art_to_tag_repo.add_one(art_to_tag_add_data)
+        except SQLAlchemyError as err:
+            logger.critical(f"Error: {err}")
+            raise InternalServerErrorHTTPException from err
+        return new_art_id
+
+    async def get_arts(
+        self,
+        art_id: int | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+        include_tags: bool = False,
+    ) -> "list[ArtEntity]":
         """
         Retrieves a list of arts, optionally filtered by ID.
 
@@ -126,7 +165,7 @@ class ArtsService:
         param art_id: The ID of the art to retrieve, or None to get all arts.
         param offset: The number of arts to skip, for pagination.
         param limit: The maximum number of arts to return.
-        @return: A list of `ArtEntity` objects.
+        return: A list of `ArtEntity` objects.
         raises ArtNotFoundHTTPException: If no arts are found.
         raises InternalServerErrorHTTPException: If there is an error.
         """
@@ -176,7 +215,9 @@ class ArtsService:
         """
         try:
             # noinspection PyTypeChecker
-            art_entities: list["ArtEntity"] = await self.art_repo.find_all({"id": art_id})
+            art_entities: list["ArtEntity"] = await self.art_repo.find_all(
+                {"id": art_id}
+            )
             if not art_entities:
                 return False
         except SQLAlchemyError as err:
@@ -192,7 +233,7 @@ class ArtsService:
             s3_service.delete_file(blob_name=art_entity.blob_name)
         except GoogleCloudError as err:
             logger.error(f"Error {err}")
-            with open(self.UNDELETED_BLOB_NAMES_FILE, mode='a', encoding='utf-8') as f:
+            with open(self.UNDELETED_BLOB_NAMES_FILE, mode="a", encoding="utf-8") as f:
                 f.write(f"{art_entity.blob_name}\n")
 
         return True

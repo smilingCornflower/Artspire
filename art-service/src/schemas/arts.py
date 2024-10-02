@@ -13,7 +13,6 @@ class ArtUploadSchema(BaseModel):
 class ArtCreateSchema(BaseModel):
     user_id: int
     title: str | None
-    tags: list[str]
     url: str
     blob_name: str
     url_generated_at: datetime
