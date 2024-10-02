@@ -27,7 +27,7 @@ class DatabaseManager:
     def async_session_maker(self) -> async_sessionmaker:
         async_session_factory = async_sessionmaker(
             bind=self.engine,
-            autoflush=False,
+            autoflush=True,
             autocommit=False,
             expire_on_commit=False,
         )

@@ -34,7 +34,8 @@ class S3Service(S3Client):
         :raises InvalidImageTypeHTTPException: If the image file type is not supported.
         :raises InternalServerErrorHTTPException: If there is an error during the upload to S3.
         """
-        logger.info(f"Started upload_image()")
+        logger.warning(f"Started upload_image()")
+
         image_type: str = image_file.content_type
         if image_type not in self.IMG_TYPES:
             exception_text: str = f"Invalid image type: {image_type}. Expected one of: {', '.join(self.IMG_TYPES)}"
@@ -42,16 +43,13 @@ class S3Service(S3Client):
 
         image_file: BinaryIO = image_file.file
         if image_type != self.JPEG:
+            logger.info(f"await convert_to_jpg(); image_type: {image_type}")
             image_file = await convert_to_jpg(image_file)
 
         image_name: str = f"arts/{user_id}/{shortuuid.uuid()}.jpg"
         try:
-            logger.debug(f"image_type: {image_type}\n\t "
-                         f"image_name: {image_name}\n\t "
-                         f"is image file empty: {bool(image_file)}"
-                         )
             blob_name: str = self.upload_file(file_obj=image_file, blob_name=image_name)
-            logger.info(f"Ended upload_image()")
+            logger.info(f"FINISHED upload_image()")
         except GoogleCloudError as err:
             logger.error(f"Error: {err}")
             raise InternalServerErrorHTTPException

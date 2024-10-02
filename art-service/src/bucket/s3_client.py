@@ -77,9 +77,7 @@ class S3Client:
             result_url: str = blob.generate_signed_url(
                 version="v4", expiration=timedelta(days=settings.s3.expiration_days)
             )
-            logger.info(f"Finished generating url, result_url: {result_url}")
             return result_url
-
         except GoogleCloudError as err:
             logger.error(f"Google Cloud error during URL generation: {err}")
             raise err
