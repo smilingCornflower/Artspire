@@ -1,13 +1,11 @@
-# Type hints
+# Standard libraries
 from typing import TYPE_CHECKING
 
 # SQLAlchemy
 from sqlalchemy import insert
-from sqlalchemy.exc import SQLAlchemyError
 
 # Local
 from config import logger
-from database.db import db_manager
 from models.art_to_tag import art_to_tag
 from .repository import SQLAlchemyRepository
 
@@ -19,17 +17,10 @@ if TYPE_CHECKING:
 class ArtToTagRepository(SQLAlchemyRepository):
     model = art_to_tag
 
-    async def add_one(self, data: dict) -> None:
-        async with db_manager.async_session_maker() as session:
-            async with session.begin():
-                logger.warning(f"Started inserting into model: {self.model}")
-                logger.debug(f"Model: {self.model}, data to be inserted: {data}")
-                try:
-                    stmt: "Insert" = insert(self.model).values(**data)
-                    logger.debug(f"SQL statement: {stmt}")
-
-                    await session.execute(stmt)
-
-                except SQLAlchemyError as err:
-                    logger.error(f"SQLAlchemyError occurred: {err}")
-                    raise err
+    async def add_one(self, data: dict | list[dict]) -> None:
+        logger.warning("STARTED add_one()")
+        stmt: "Insert" = insert(self.model).values(data)
+        logger.debug(f"stmt: \n{stmt}")
+        async with self.transaction():
+            await self._session.execute(stmt)
+            logger.info("FINISHED add_one()")

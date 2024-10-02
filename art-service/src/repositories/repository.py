@@ -1,142 +1,138 @@
 # Standard lib
+from __future__ import annotations
+from contextlib import asynccontextmanager
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 # SQLAlchemy
 from sqlalchemy import insert, select, update, delete, and_
 from sqlalchemy.orm import joinedload
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 # Local
 from config import logger
-from database.db import db_manager
 from schemas.entities import BaseEntity
 
 # Type hints
 if TYPE_CHECKING:
-    from sqlalchemy import (
-        Insert, Select, Delete, Update, ChunkedIteratorResult)
+    from sqlalchemy import Insert, Select, Delete, Result
     from sqlalchemy.orm import DeclarativeMeta
     from sqlalchemy.sql.expression import BinaryExpression
-    from sqlalchemy.sql.schema import Column
-    from schemas.arts import ArtCreateSchema
-    from typing import Any
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class AbstractRepository(ABC):
     @abstractmethod
     async def add_one(self, data: dict):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
-    async def find_all(self,
-                       filter_by: dict,
-                       offset: int | None,
-                       limit: int | None,
-                       ):
-        raise NotImplemented
+    async def find_all(
+        self,
+        filter_by: dict,
+        offset: int | None,
+        limit: int | None,
+    ):
+        raise NotImplementedError
 
     @abstractmethod
     async def update_one(self, model_id: int, data: dict):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     async def delete_one(self, delete_by: dict):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class SQLAlchemyRepository(AbstractRepository):
     model: "DeclarativeMeta" = None
 
-    async def add_one(self, data: dict) -> int:
-        logger.debug(f"Insert into {self.model.__name__}: {data}")
-        async with db_manager.async_session_maker() as session:
-            async with session.begin():
-                try:
-                    stmt: "Insert" = insert(self.model).values(**data).returning(self.model.id)
-                    result: "ChunkedIteratorResult" = await session.execute(stmt)
-                    result_id: int = result.scalar_one()
-                    logger.info(f"Inserted ID: {result_id}")
-                    return result_id
-                except IntegrityError as err:
-                    logger.error(f"IntegrityError: {err}")
-                    raise err
-                except SQLAlchemyError as err:
-                    logger.error(f"SQLAlchemyError: {err}")
-                    raise err
+    def __init__(self, session: "AsyncSession"):
+        self._session: "AsyncSession" = session
 
-    async def find_all(self,
-                       filter_by: dict,
-                       offset: int = None,
-                       limit: int = None,
-                       joined_attributes: list[str] = None,
-                       ) -> "list[BaseEntity]":
-        logger.debug(f"Selecting from {self.model.__name__} with filter: {filter_by}")
-        async with db_manager.async_session_maker() as session:
-            stmt: "Select" = select(self.model)
-            if joined_attributes:
-                for attr in joined_attributes:
-                    stmt: "Select" = stmt.options(joinedload(getattr(self.model, attr)))
-            if offset is not None and limit is not None:
-                stmt: "Select" = stmt.offset(offset).limit(limit)
+    @asynccontextmanager
+    async def transaction(self):
+        try:
+            yield
+            await self._session.commit()
+        except Exception as err:
+            logger.critical(f"Error: {err}")
+            await self._session.rollback()
+            raise
 
-            if filter_by:
-                conditions: list[BinaryExpression] = []
-                for key, value in filter_by.items():
-                    if hasattr(self.model, key):
-                        if isinstance(value, list):
-                            expression: "BinaryExpression" = getattr(self.model, key).in_(value)
-                        else:
-                            # noinspection PyTypeChecker
-                            expression: "BinaryExpression" = getattr(self.model, key) == value
-                        conditions.append(expression)
-                if conditions:
-                    stmt = stmt.where(and_(*conditions))
-            logger.debug(f"stmt: {stmt}")
-            try:
-                result: "ChunkedIteratorResult" = await session.execute(stmt)
-            except SQLAlchemyError as err:
-                logger.error(f"SQLAlchemyError: {err}")
-                raise err
-            rows = result.unique().all()
-            entities: "list[BaseEntity]" = [row[0].to_entity() for row in rows]
-            logger.info(f"Found {len(entities)} entities")
-            return entities
+    async def add_one(self, data: dict | list[dict]) -> int:
+        logger.warning("STARTED add_one()")
+
+        # TODO: Returning self.model instead of self.model.id
+        stmt: "Insert" = insert(self.model).values(**data).returning(self.model.id)
+        logger.debug(f"stmt: \n{stmt}")
+
+        async with self.transaction():
+            result: "Result" = await self._session.execute(stmt)
+        result_id: int = result.scalar_one()
+
+        return result_id
+
+    async def find_all(
+        self,
+        filter_by: dict,
+        offset: int = None,
+        limit: int = None,
+        joined_attributes: list[str] = None,
+    ) -> "list[BaseEntity]":
+        logger.warning("STARTED find_all()")
+
+        stmt: "Select" = select(self.model)
+        if joined_attributes:
+            for attr in joined_attributes:
+                stmt: "Select" = stmt.options(joinedload(getattr(self.model, attr)))
+        if offset is not None and limit is not None:
+            stmt: "Select" = stmt.offset(offset).limit(limit)
+
+        conditions: list[BinaryExpression] = []
+        for key, value in filter_by.items():
+            if isinstance(value, list):
+                expression: "BinaryExpression" = getattr(self.model, key).in_(value)
+            else:
+                # noinspection PyTypeChecker
+                expression: "BinaryExpression" = value == getattr(self.model, key)
+            conditions.append(expression)
+        if conditions:
+            stmt = stmt.where(and_(*conditions))
+
+        logger.debug(f"stmt: \n{stmt}")
+        result: "Result" = await self._session.execute(stmt)
+        rows = result.unique().scalars()
+        entities: "list[BaseEntity]" = [row.to_entity() for row in rows]
+
+        logger.info(f"Found {len(entities)} entities")
+        return entities
 
     async def delete_one(self, delete_by: dict) -> int:
-        async with db_manager.async_session_maker() as session:
-            async with session.begin():
-                logger.debug(f"data: {delete_by}")
-                conditions: list[BinaryExpression] = []
+        logger.warning("STARTED delete_one()")
+        logger.debug(f"delete_by: {delete_by}")
 
-                for key, value in delete_by.items():
-                    if not hasattr(self.model, key):
-                        raise AttributeError(f"A model {self.model} has no attribute {key}")
-                    # noinspection PyTypeChecker
-                    expression: "BinaryExpression" = getattr(self.model, key) == value
-                    conditions.append(expression)
-                if not conditions:
-                    raise ValueError(f"Conditions must contain at least one entry")
+        conditions: list[BinaryExpression] = []
+        for key, value in delete_by.items():
+            if not hasattr(self.model, key):
+                raise AttributeError(f"A model {self.model} has no attribute {key}")
+            # noinspection PyTypeChecker
+            expression: "BinaryExpression" = getattr(self.model, key) == value
+            conditions.append(expression)
+        if not conditions:
+            raise ValueError(f"Conditions must contain at least one entry")
 
-                try:
-                    stmt: "Delete" = delete(self.model).where(and_(*conditions))
-                    result: "ChunkedIteratorResult" = await session.execute(stmt)
-                    result_rowcount: int = result.rowcount
-                    logger.info(f"Deleted {result_rowcount} items")
-                    return result_rowcount
-                except SQLAlchemyError as err:
-                    logger.error(f"Error occurred during delete operation: {err}", exc_info=True)
-                    raise err
+        stmt: "Delete" = delete(self.model).where(and_(*conditions))
+        logger.debug(f"stmt: \n{stmt}")
 
-    async def update_one(self, model_id: int, data: dict):
-        logger.debug(f"Updating {self.model.__name__} with ID {model_id}")
-        async with db_manager.async_session_maker() as session:
-            async with session.begin():
-                try:
-                    stmt = update(self.model).where(self.model.id == model_id).values(**data)
-                    await session.execute(stmt)
-                    logger.info(f"Updated {self.model.__name__} with ID {model_id}")
-                except SQLAlchemyError as err:
-                    logger.error("SQLAlchemyError during update")
-                    raise err
+        async with self.transaction():
+            result: "Result" = await self._session.execute(stmt)
+        result_rowcount: int = result.rowcount
 
+        logger.info(f"Deleted {result_rowcount} items")
+        return result_rowcount
+
+    async def update_one(self, model_id: int, data: dict) -> None:
+        logger.warning(f"STARTED update_one()")
+        stmt = update(self.model).where(self.model.id == model_id).values(**data)
+        async with self.transaction():
+            await self._session.execute(stmt)
