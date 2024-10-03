@@ -16,7 +16,7 @@ class TagRepository(SQLAlchemyRepository):
 
     async def add_one(self, data: dict | list[dict], ignore_conflicts: list[str] = None) -> None:
         logger.info(f"STARTED add_one()")
-        stmt: "PsqlInsert" = psql_insert(self.model).values(**data)
+        stmt: "PsqlInsert" = psql_insert(self.model).values(data)
         stmt = stmt.on_conflict_do_nothing(index_elements=ignore_conflicts)
 
         logger.debug(f"stmt: \n{stmt}")

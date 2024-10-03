@@ -1,5 +1,5 @@
 from schemas.entities import BaseEntity
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
 
@@ -22,8 +22,7 @@ class CommentUploadSchema(BaseModel):
 class CommentCreateSchema(CommentUploadSchema):
     user_id: int
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class CommentOutSchema(BaseModel):

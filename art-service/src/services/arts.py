@@ -83,7 +83,7 @@ class ArtsService:
         self,
         art_data: "ArtUploadSchema",
         art_file: "UploadFile",
-        create_tags: bool = False,
+        create_tags: bool = True,
     ) -> int:
         """
         Adds an artwork to the repository, along with optional tag creation.

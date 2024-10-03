@@ -1,13 +1,16 @@
 import uvicorn
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from fastapi.responses import RedirectResponse
 from api.routers.router import router as arts_router
 from fastapi.middleware.cors import CORSMiddleware
 from config import logger
 
 
+@asynccontextmanager
 async def async_lifespan(app: FastAPI):
     yield
+
 
 app = FastAPI(
     title="Artspire-Arts",
@@ -15,7 +18,7 @@ app = FastAPI(
 )
 
 app.add_middleware(
-    CORSMiddleware, # noqa
+    CORSMiddleware,  # noqa
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],

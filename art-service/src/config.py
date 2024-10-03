@@ -1,6 +1,6 @@
 from pathlib import Path
 from datetime import date
-
+import sys
 import pika
 from loguru import logger
 from pydantic import BaseModel
@@ -8,6 +8,33 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 art_dir: Path = Path(__file__).parent.parent
 env_file: Path = art_dir / "secrets/.env"
+
+
+class DatabaseConfig(BaseModel):
+    user: str
+    host: str
+    port: str
+    password: str
+    name: str
+
+    echo: bool = False
+    echo_pool: bool = False
+    pool_size: int = 50
+    max_overflow: int = 10
+
+    def get_db_url(self) -> str:
+        url: str = (
+            f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
+        )
+        return url
+
+    naming_convention: dict[str, str] = {
+        "ix": "ix_%(column_0_label)s",
+        "uq": "uq_%(table_name)s_%(column_0_name)s",
+        "ck": "ck_%(table_name)s_%(constraint_name)s",
+        "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+        "pk": "pk_%(table_name)s",
+    }
 
 
 class BucketConfig(BaseModel):
@@ -37,31 +64,6 @@ class LoggingConfig(BaseModel):
     critical_logs_path: Path = art_dir / f"logs/{today_date}/critical.log"
 
 
-class DatabaseConfig(BaseModel):
-    user: str
-    host: str
-    port: str
-    password: str
-    name: str
-
-    echo: bool = False
-    echo_pool: bool = False
-    pool_size: int = 50
-    max_overflow: int = 10
-
-    def get_db_url(self) -> str:
-        url: str = f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
-        return url
-
-    naming_convention: dict[str, str] = {
-        "ix": "ix_%(column_0_label)s",
-        "uq": "uq_%(table_name)s_%(column_0_name)s",
-        "ck": "ck_%(table_name)s_%(constraint_name)s",
-        "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-        "pk": "pk_%(table_name)s"
-    }
-
-
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=env_file,
@@ -77,18 +79,11 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
+logger.remove()
 
-def setup_logger(log_path: str | Path, log_level: str):
-    logger_format: str = "{level} | {file} | {function} | {line} | {time:YYYY-MM-DD HH:mm:ss} \n\t {message}"
-    logger.add(log_path,
-               format=logger_format,
-               level=log_level,
-               rotation="10 MB",
-               compression="zip")
+logger_format = (
+    "<green>{file:>25}</>/<blue>{function:<25}</> || "
+    "<level>{level:<8}</> || <cyan><{line}></>: {message}"
+)
 
-
-setup_logger(log_path=settings.log.debug_logs_path, log_level="DEBUG")
-setup_logger(log_path=settings.log.info_logs_path, log_level="INFO")
-setup_logger(log_path=settings.log.warning_logs_path, log_level="WARNING")
-setup_logger(log_path=settings.log.error_logs_path, log_level="ERROR")
-setup_logger(log_path=settings.log.critical_logs_path, log_level="CRITICAL")
+logger.add(sys.stdout, format=logger_format, colorize=True)

@@ -19,10 +19,13 @@ TAGS_REGEX: str = r"^(\w+)+(,\w+)*$"
 # Tag1,Tag2
 # tag_one,tag_two,tag_three,tag_four
 
+
 async def get_art_upload_data(
-        art_tags: Annotated[str, Query(example="Tag1,Tag2,Tag3,Tag4", pattern=TAGS_REGEX)],
-        user_data: Annotated["UserEntity", Depends(get_user_data)],
-        art_title: str | None = None,
+    art_tags: Annotated[
+        str, Query(examples=[{"example": "Tag1,Tag2,Tag3,Tag4"}], pattern=TAGS_REGEX)
+    ],
+    user_data: Annotated["UserEntity", Depends(get_user_data)],
+    art_title: str | None = None,
 ) -> "ArtUploadSchema":
     art_tags_list = art_tags.split(",")
     art_upload_data: "ArtUploadSchema" = ArtUploadSchema(

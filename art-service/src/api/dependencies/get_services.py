@@ -1,3 +1,6 @@
+from typing import TYPE_CHECKING
+from fastapi import Depends
+
 from repositories.arts import ArtRepository
 from repositories.tags import TagRepository
 from repositories.users_to_saves import UsersToSavesRepository
@@ -13,35 +16,52 @@ from services.comments import CommentsService
 
 from database.db import db_manager
 
-
-async def get_arts_service() -> "ArtsService":
-    return ArtsService(
-        art_repo=ArtRepository(db_manager.async_session_maker()),
-        art_to_tag_repo=ArtToTagRepository(db_manager.async_session_maker()),
-        tag_repo=TagRepository(db_manager.async_session_maker()),
-    )
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+    from typing import AsyncGenerator
 
 
-async def get_tags_service() -> "TagsService":
-    return TagsService(TagRepository(db_manager.async_session_maker()))
+async def get_session() -> "AsyncSession":
+    async with db_manager.async_session_maker() as session:
+        yield session
 
 
-async def get_users_to_saves_service() -> "UsersToSavesService":
-    return UsersToSavesService(
-        users_to_saves_repo=UsersToSavesRepository(db_manager.async_session_maker()),
-        art_repo=ArtRepository(db_manager.async_session_maker()),
-    )
+class DBGateway:
+    def __init__(self, session: "AsyncSession"):
+        self.session = session
+
+    def get_arts_service(self) -> ArtsService:
+        return ArtsService(
+            art_repo=ArtRepository(self.session),
+            art_to_tag_repo=ArtToTagRepository(self.session),
+            tag_repo=TagRepository(self.session),
+        )
+
+    def get_tags_service(self) -> TagsService:
+        return TagsService(
+            tag_repo=TagRepository(self.session),
+        )
+
+    def get_users_to_saves_service(self) -> UsersToSavesService:
+        return UsersToSavesService(
+            users_to_saves_repo=UsersToSavesRepository(self.session),
+            art_repo=ArtRepository(self.session),
+        )
+
+    def get_users_to_likes_service(self) -> UsersToLikesService:
+        return UsersToLikesService(
+            users_to_likes_repo=UsersToLikesRepository(self.session),
+            art_repo=ArtRepository(self.session),
+        )
+
+    def get_comments_service(self) -> CommentsService:
+        return CommentsService(
+            comments_repo=CommentsRepository(self.session),
+            art_repo=ArtRepository(self.session),
+        )
 
 
-async def get_users_to_likes_servcie() -> "UsersToLikesService":
-    return UsersToLikesService(
-        users_to_likes_repo=UsersToLikesRepository(db_manager.async_session_maker()),
-        art_repo=ArtRepository(db_manager.async_session_maker()),
-    )
-
-
-async def get_comments_service() -> "CommentsService":
-    return CommentsService(
-        comments_repo=CommentsRepository(db_manager.async_session_maker()),
-        art_repo=ArtRepository(db_manager.async_session_maker()),
-    )
+async def get_db_gateway(
+    session: "AsyncSession" = Depends(get_session),
+) -> DBGateway:
+    return DBGateway(session)

@@ -63,7 +63,7 @@ class SQLAlchemyRepository(AbstractRepository):
         logger.warning("STARTED add_one()")
 
         # TODO: Returning self.model instead of self.model.id
-        stmt: "Insert" = insert(self.model).values(**data).returning(self.model.id)
+        stmt: "Insert" = insert(self.model).values(data).returning(self.model.id)
         logger.debug(f"stmt: \n{stmt}")
 
         async with self.transaction():
@@ -133,6 +133,6 @@ class SQLAlchemyRepository(AbstractRepository):
 
     async def update_one(self, model_id: int, data: dict) -> None:
         logger.warning(f"STARTED update_one()")
-        stmt = update(self.model).where(self.model.id == model_id).values(**data)
+        stmt = update(self.model).where(self.model.id == model_id).values(data)
         async with self.transaction():
             await self._session.execute(stmt)
