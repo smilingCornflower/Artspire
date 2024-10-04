@@ -64,6 +64,12 @@ class LoggingConfig(BaseModel):
     critical_logs_path: Path = art_dir / f"logs/{today_date}/critical.log"
 
 
+class Server(BaseModel):
+    host: str
+    auth_port: int
+    arts_port: int
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=env_file,
@@ -71,18 +77,20 @@ class Settings(BaseSettings):
         env_nested_delimiter="__",
     )
 
+    mode: str
     db: DatabaseConfig
     rmq: RMQConfig
+    server: Server
     s3: BucketConfig = BucketConfig()
     log: LoggingConfig = LoggingConfig()
 
 
 settings = Settings()
-
+print(settings.server)
 logger.remove()
 
 logger_format = (
-    "<green>{file:>25}</>/<blue>{function:<25}</> || "
+    "<green>{file:>25}</>::<blue>{function:<25}</> || "
     "<level>{level:<8}</> || <cyan><{line}></>: {message}"
 )
 
