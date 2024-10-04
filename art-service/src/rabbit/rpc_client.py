@@ -48,6 +48,23 @@ class RmqRpcClient:
 
             raise
 
+    async def close(self):
+        try:
+            if not self.connection.is_closed:
+                await self.channel.close()
+                await self.connection.close()
+                logger.info("Connection to RabbitMQ closed.")
+        except AMQPException as err:
+            logger.error(f"Error while closing connection: {err}", exc_info=True)
+            raise
+
+    async def __aenter__(self) -> "Self":
+        await self.connect()
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await self.close()
+
     async def on_response(self, message: "AbstractIncomingMessage") -> None:
         try:
             logger.debug(f"Received message with correlation_id: {message.correlation_id}")
@@ -84,10 +101,10 @@ class RmqRpcClient:
 
 
 async def run_rpc_client(body: str, routing_key: str) -> "Any":
-    client = RmqRpcClient()
     try:
-        await client.connect()
-        response = await client.call(call_body=body, routing_key=routing_key)
+        async with RmqRpcClient() as client:
+            logger.info(f"In async with RmqRpcClient() as client:")
+            response = await client.call(call_body=body, routing_key=routing_key)
         return response
     except Exception as e:
         logger.error(f"An error occurred: {e}", exc_info=True)
