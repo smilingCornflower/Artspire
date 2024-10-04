@@ -85,8 +85,7 @@ class SQLAlchemyRepository(AbstractRepository):
         if joined_attributes:
             for attr in joined_attributes:
                 stmt: "Select" = stmt.options(joinedload(getattr(self.model, attr)))
-        if offset is not None and limit is not None:
-            stmt: "Select" = stmt.offset(offset).limit(limit)
+        stmt: "Select" = stmt.offset(offset).limit(limit)
 
         conditions: list[BinaryExpression] = []
         for key, value in filter_by.items():

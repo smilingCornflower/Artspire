@@ -62,8 +62,7 @@ class UsersToSavesService:
                 limit=limit,
             )
             if not saved_arts:
-                logger.info(f"saved_arts is empty -> return []")
-                return []
+                raise ArtNotFoundHTTPException(detail="No art found")
             saved_arts_id: list = [i.art_id for i in saved_arts]
             art_attributes: list[str] | None = None
             if include_tags:
@@ -73,6 +72,7 @@ class UsersToSavesService:
                 filter_by={"id": saved_arts_id},
                 joined_attributes=art_attributes,
             )
+
         except SQLAlchemyError as err:
             logger.error(f"Error: {err}")
             raise InternalServerErrorHTTPException from err

@@ -86,7 +86,6 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-print(settings.server)
 logger.remove()
 
 logger_format = (
