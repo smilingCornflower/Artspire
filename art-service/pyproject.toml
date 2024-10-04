@@ -1,0 +1,7 @@
+[tool.pytest.ini_options]
+pythonpath = [
+    ".", "src"
+]
+env_files = "./secrets/.test.env"
+asyncio_mode = "auto"
+filterwarnings="ignore::DeprecationWarning"
