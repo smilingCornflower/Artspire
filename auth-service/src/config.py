@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pika
+import sys
 from loguru import logger
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel
@@ -64,8 +65,16 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-logger.add(settings.logs_path,
-           format="{time:YYYY-MM-DD HH:mm:ss} | {level} | [{file} | {function} | {line}] \n\t{message}",
-           level="DEBUG",
-           rotation="10 MB",
-           compression="zip")
+
+def custom_record(record):
+    record["path"] = f"{record["module"]}/{record["file"]}"
+    record["func"] = f"{record["function"]}[{record["line"]}]"
+    return record
+
+
+logger.remove()
+
+logger_format = "<blue>{path:>40}</>::<green>{func:<25}</> || <level>{level:<8}</> || {message}"
+logger.configure(patcher=custom_record)
+
+logger.add(sys.stdout, format=logger_format, colorize=True)
