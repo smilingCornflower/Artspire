@@ -4,7 +4,6 @@ from fastapi import Depends, Body
 from api.dependencies import get_db_gateway, get_user_data
 from api.dependencies.get_services import DBGateway
 from api.descriptions.tag_descrs import (
-    description_get_tags,
     description_post_tag,
     description_delete_tag,
     description_search_tag,
@@ -17,6 +16,7 @@ from typing import Annotated
 if TYPE_CHECKING:
     from services.tags import TagsService
 
+
 @router.post(
     "/tags",
     description=description_post_tag,
@@ -25,9 +25,9 @@ if TYPE_CHECKING:
     status_code=201,
 )
 async def post_tag(
-    tag_name: Annotated[str, Body(..., embed=True, min_length=2, max_length=30)],
-    db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
-    user_data: "UserEntity" = Depends(get_user_data),
+        tag_name: Annotated[str, Body(..., embed=True, min_length=2, max_length=30)],
+        db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
+        user_data: "UserEntity" = Depends(get_user_data),
 ) -> int:
     tag_service: "TagsService" = db_gateway.get_tags_service()
     if user_data.role_id != 2:  # if user is not a moderator
@@ -39,9 +39,9 @@ async def post_tag(
     "/tags", description=description_delete_tag, response_model=bool, tags=["tags"]
 )
 async def delete_tag(
-    tag_id: Annotated[int, Body(..., embed=True)],
-    db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
-    user_data: "UserEntity" = Depends(get_user_data),
+        tag_id: Annotated[int, Body(..., embed=True)],
+        db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
+        user_data: "UserEntity" = Depends(get_user_data),
 ) -> bool:
     tag_service: "TagsService" = db_gateway.get_tags_service()
     if user_data.role_id != 2:
@@ -57,8 +57,8 @@ async def delete_tag(
     response_model=list[TagEntity],
 )
 async def search_tag(
-    tag_part: str,
-    db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
+        tag_part: str,
+        db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
 ) -> list["TagEntity"]:
     tag_service: "TagsService" = db_gateway.get_tags_service()
     result_tags: list["TagEntity"] = await tag_service.tag_search(tag_part)
