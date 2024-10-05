@@ -1,14 +1,3 @@
-description_get_tags: str = """
-**Description**
-- Retrieves a list of all tags in the system.
-
-**Parameters:**  
-- None
-
-**Returns:**
-- **200 OK**: Success, returns a list of tags.
-- **500 Internal Server Error**: If an unexpected server error occurs during the retrieval process.
-"""
 description_post_tag: str = """
 **Description**
 - Adds a new tag to the system.

@@ -17,26 +17,11 @@ from typing import Annotated
 if TYPE_CHECKING:
     from services.tags import TagsService
 
-
-@router.get(
-    "/tags",
-    description=description_get_tags,
-    tags=["tags"],
-    response_model=list[TagEntity],
-)
-async def get_tags(
-    db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
-) -> list:
-    tag_service: "TagsService" = db_gateway.get_tags_service()
-    all_tags: list["TagEntity"] = await tag_service.get_tags()
-    return all_tags
-
-
 @router.post(
     "/tags",
     description=description_post_tag,
     tags=["tags"],
-    response_model=int,
+    response_model=None,
     status_code=201,
 )
 async def post_tag(
@@ -47,8 +32,7 @@ async def post_tag(
     tag_service: "TagsService" = db_gateway.get_tags_service()
     if user_data.role_id != 2:  # if user is not a moderator
         raise ForbiddenHTTPException
-    new_tag_id: int = await tag_service.add_tag(tag_name)
-    return new_tag_id
+    await tag_service.add_tag(tag_name)
 
 
 @router.delete(
