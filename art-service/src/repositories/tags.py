@@ -25,7 +25,7 @@ class TagRepository(SQLAlchemyRepository):
 
     async def get_tags_by_name_part(self, tag_part: str) -> list["TagEntity"]:
         logger.warning(f"STARTED get_tags_by_name_part()")
-        tag_part: str = tag_part + "%"
+        tag_part: str = tag_part.lower() + "%"
         stmt: "Select" = select(self.model).filter(
             func.lower(self.model.name).like(tag_part)
         )
