@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Response
 from schemas.users import (
     UserCreateSchema,
     UserLoginSchema,
     UserReadSchema,
 )
 from config import logger
+from utils.set_httponly import set_refresh_in_httponly
 from services.users import UserService
-from schemas.tokens import TokenInfoSchema
+from schemas.tokens import TokenInfoSchema, AccessTokenSchema
 from .dependencies import (
     get_user_service,
     get_current_user,
@@ -38,12 +39,14 @@ async def register_user(
     return new_user_id
 
 
-@router.post("/login", response_model=TokenInfoSchema, description=description_login)
+@router.post("/login", response_model=AccessTokenSchema, description=description_login)
 async def login_user(
+        response: Response,
         user_login_data: Annotated[UserLoginSchema, Depends(get_user_login_data)],
         user_service=Depends(get_user_service)
-) -> TokenInfoSchema:
-    token_data: TokenInfoSchema = await user_service.validate_user(user_login_data)
+) -> AccessTokenSchema:
+    token_data: AccessTokenSchema = await user_service.validate_user(response, user_login_data)
+
     return token_data
 
 

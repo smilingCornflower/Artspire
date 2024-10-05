@@ -1,14 +1,16 @@
 from repositories.repository import AbstractRepository
 from config import settings, logger
+from fastapi import Response
 from schemas.users import (
     UserCreateSchema,
     UserLoginSchema,
     UserEntity,
     UserReadSchema,
 )
-from schemas.tokens import TokenInfoSchema
+from schemas.tokens import TokenInfoSchema, AccessTokenSchema
 from utils.password import hash_password, check_password
 from utils.jwt_utils import create_access_jwt, create_refresh_jwt
+from utils.set_httponly import set_refresh_in_httponly
 from sqlalchemy.exc import SQLAlchemyError
 from exceptions.http import (
     UsernameAlreadyExistHTTPException,
@@ -73,8 +75,10 @@ class UserService:
         logger.info(f"User '{user_create_data.username}' added with ID: {new_user_id}")
         return new_user_id
 
-    async def validate_user(self, user: UserLoginSchema) -> TokenInfoSchema:
-        user_by_username: list[UserEntity] = await self.user_repo.find_all({"username": user.username})
+    async def validate_user(self, response: Response, user: UserLoginSchema) -> AccessTokenSchema:
+
+        user_by_username: list[UserEntity] = await self.user_repo.find_all(
+            {"username": user.username})
 
         if not user_by_username:
             logger.warning(f"Unauthorized access attempt for username: '{user.username}'")
@@ -93,10 +97,15 @@ class UserService:
             raise UnauthorizedHTTPException
 
         token_data: TokenInfoSchema = create_token_for_user(user=user_entity)
-        logger.info(f"Token created for user '{user.username}'")
-        return token_data
 
-    async def create_token_for_user_by_id(self, user_id: int, include_refresh: bool = False) -> TokenInfoSchema:
+        set_refresh_in_httponly(response=response, refresh_token=token_data.refresh_token)
+        access_toke_data: AccessTokenSchema = AccessTokenSchema.model_validate(token_data)
+
+        logger.info(f"Token created for user '{user.username}'")
+        return access_toke_data
+
+    async def create_token_for_user_by_id(self, user_id: int,
+                                          include_refresh: bool = False) -> TokenInfoSchema:
         user_by_id: list[UserEntity] = await self.user_repo.find_all({"id": user_id})
         result_token = create_token_for_user(
             user=user_by_id[0],
