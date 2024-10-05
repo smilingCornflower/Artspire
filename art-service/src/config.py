@@ -2,11 +2,13 @@ from pathlib import Path
 from datetime import date
 import sys
 import pika
+import os
 from loguru import logger
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 art_dir: Path = Path(__file__).parent.parent
+src_dir: Path = art_dir / "src"
 env_file: Path = art_dir / "secrets/.env"
 
 
@@ -86,11 +88,17 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def custom_record(record):
+    record["path"] = f"{record["module"]}/{record["file"]}"
+    record["func"] = f"{record["function"]}[{record["line"]}]"
+    return record
+
+
 logger.remove()
 
-logger_format = (
-    "<green>{file:>25}</>::<blue>{function:<25}</> || "
-    "<level>{level:<8}</> || <cyan><{line}></>: {message}"
-)
+logger_format = "<blue>{path:>40}</>::<green>{func:<25}</> || <level>{level:<8}</> || {message}"
+logger.configure(patcher=custom_record)
 
 logger.add(sys.stdout, format=logger_format, colorize=True)

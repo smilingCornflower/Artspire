@@ -29,7 +29,6 @@ async def get_user_data(
         credentials: "HTTPAuthorizationCredentials" = Depends(custom_http_bearer)
 ) -> UserEntity:
     token: str = credentials.credentials
-    logger.debug(f"Received token: {token}")
     jwt_response: dict = await run_jwt_client(body=token)
     if not jwt_response["is_valid"]:
         raise UnauthorizedHTTPException
@@ -42,5 +41,4 @@ async def get_user_data(
         profile_image=user_data["profile_image"],
         role_id=user_data["role_id"],
     )
-    logger.info(f"user_data: {user_data}")
     return user_data

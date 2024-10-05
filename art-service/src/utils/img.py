@@ -6,7 +6,7 @@ from PIL import Image
 
 
 async def convert_to_jpg(upload_file: BinaryIO) -> BinaryIO:
-    logger.info("Started converting the image")
+    logger.info("STARTED convert_to_jpg()")
     try:
         image = Image.open(upload_file)
         if image.mode == 'RGBA':
@@ -18,5 +18,5 @@ async def convert_to_jpg(upload_file: BinaryIO) -> BinaryIO:
         return output
 
     except OSError as err:
-        logger.error("OSError occurred during image processing: %s", err)
+        logger.critical("OSError occurred during image processing: %s", err)
         raise err
