@@ -20,6 +20,8 @@ AUTH_SERVER: str = f"http://{settings.server.host}:{settings.server.auth_port}"
 ARTS_SERVER: str = f"http://{settings.server.host}:{settings.server.arts_port}"
 
 load_dotenv()
+# user_1_id: 24
+# user_2_id: 25
 test_user_1_name: str = "test_user_1"
 test_user_2_name: str = "test_user_2"
 test_user_1_password: str = os.getenv("TEST_USER_1_PASS")
@@ -34,7 +36,7 @@ def event_loop(request):
     loop.close()
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 async def setup_database():
     assert settings.mode == "TEST"
     logger.warning(f"MODE={settings.mode}")
