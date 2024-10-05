@@ -36,7 +36,13 @@ class TestTagsPost:
 
 @pytest.mark.parametrize(
     "tag_part, expected_tags",
-    [("a", ["Anime", "Art"]), ("w", ["Wallpaper"]), ("s", [])]
+    [
+        ("a", ["Anime", "Art"]),
+        ("A", ["Anime", "Art"]),
+        ("w", ["Wallpaper"]),
+        ("wAL", ["Wallpaper"]),
+        ("s", [])
+    ]
 )
 async def test_get_tags_search(
         async_client: "AsyncClient", tag_part: str, expected_tags: list[str]
