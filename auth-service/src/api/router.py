@@ -50,18 +50,19 @@ async def login_user(
     return token_data
 
 
-@router.post("/refresh", description=description_refresh, response_model=TokenInfoSchema,
+@router.post("/refresh", description=description_refresh, response_model=AccessTokenSchema,
              status_code=status.HTTP_201_CREATED)
 async def refresh_jwt(
         decoded_refresh: Annotated[dict, Depends(get_decoded_refresh_token)],
         user_service: Annotated[UserService, Depends(get_user_service)]
-) -> TokenInfoSchema:
+) -> AccessTokenSchema:
     logger.debug(f"decoded_refresh: {decoded_refresh}")
     user_id: int = decoded_refresh["sub"]
     new_access_token: TokenInfoSchema = await user_service.create_token_for_user_by_id(
         user_id=user_id,
     )
-    return new_access_token
+    access_token: AccessTokenSchema = AccessTokenSchema.model_validate(new_access_token)
+    return access_token
 
 
 @router.get("/me", description=description_me, response_model=UserReadSchema)

@@ -1,5 +1,5 @@
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Cookie
 from utils.jwt_utils import (
     decode_jwt,
     TOKEN_TYPE_FIELD,
@@ -45,13 +45,13 @@ def _get_decoded_token(
 
 def get_decoded_access_token(
         credentials: HTTPAuthorizationCredentials = Depends(get_http_bearer)
-) -> Callable:
+) -> dict:
     logger.debug(f"I am here")
     return _get_decoded_token(token_type=ACCESS_TOKEN_TYPE, token=credentials.credentials)
 
 
 def get_decoded_refresh_token(
-        credentials: HTTPAuthorizationCredentials = Depends(get_http_bearer)
-) -> Callable:
-    logger.debug(f"I am here")
-    return _get_decoded_token(token_type=REFRESH_TOKEN_TYPE, token=credentials.credentials)
+        jwt_refresh: str = Cookie(None),
+) -> dict:
+    logger.debug(f"jwt_refresh: {jwt_refresh}")
+    return _get_decoded_token(token_type=REFRESH_TOKEN_TYPE, token=jwt_refresh)
