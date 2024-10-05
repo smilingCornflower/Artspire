@@ -28,19 +28,18 @@ class TestArtsPost:
         {"art_file": ("image_3.webp", open(f"{cur_dir}/images/image_3.webp", "rb"), "image/jpeg")},
     ]
 
-    async def test_post_arts_without_token(self, async_client: "AsyncClient") -> None:
+    async def test_without_token(self, async_client: "AsyncClient") -> None:
         response: "Response" = await async_client.post(
             arts_url, params=self.query_params[0], files=self.images[0]
         )
         assert response.status_code == 401
 
-    async def test_post_arts_with_token(
+    async def test_with_token(
             self, async_client: "AsyncClient", token_1: str, token_2: str
     ) -> None:
         headers: list[dict] = [{"Authorization": f"Bearer {token_1}"},
                                {"Authorization": f"Bearer {token_1}"},
                                {"Authorization": f"Bearer {token_2}"}]
-
         for i in range(3):
             response: "Response" = await async_client.post(
                 arts_url, params=self.query_params[i], headers=headers[i], files=self.images[i]
@@ -50,7 +49,7 @@ class TestArtsPost:
 
 class TestArtsGet:
     async def test_without_params(self, async_client: "AsyncClient") -> None:
-        # IMPORTANT: this test depends on TestArtsPost()
+        # !! IMPORTANT !!: THIS TEST DEPENDS ON TestArtsPost
         response: "Response" = await async_client.get(arts_url)
         result: "Any" = response.json()
         logger.debug(f"result GET: {result}")
@@ -93,6 +92,7 @@ class TestArtsGet:
         assert len(art["tags"]) == 3
 
 
+# TODO: Test, moderator deletes an art of another user
 class TestArtsDelete:
     async def test_without_token(
             self,
