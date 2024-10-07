@@ -4,5 +4,6 @@ pythonpath = [
 ]
 env_files = "./secrets/.test.env"
 asyncio_mode = "auto"
-filterwarnings="ignore::DeprecationWarning"
 asyncio_default_fixture_loop_scope = "function"
+
+filterwarnings="ignore::DeprecationWarning"
