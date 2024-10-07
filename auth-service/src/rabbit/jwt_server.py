@@ -19,7 +19,6 @@ class JwtRpcServer(RmqRpcServer):
 
     async def msg_handler(self, message_body: str) -> str:
         try:
-            logger.debug(f"Decoding JWT: {message_body}")
             decoded: dict = decode_jwt(message_body)
             if decoded["type"] != ACCESS_TOKEN_TYPE:
                 raise ValueError(f"Incorrect token type, expected: {ACCESS_TOKEN_TYPE} received: {decoded['type']}")
@@ -27,7 +26,6 @@ class JwtRpcServer(RmqRpcServer):
                 "is_valid": True,
                 "decoded": decoded,
             }
-            logger.info(f"JWT decoded successfully: {decoded}")
         except (PyJWTError, ValueError) as err:
             logger.error(f"JWT decoding failed: {err}", exc_info=True)
             response: dict = {

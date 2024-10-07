@@ -52,7 +52,7 @@ class RmqRpcServer:
                     async with message.process(requeue=False):
                         assert message.reply_to is not None
                         msg_body: str = message.body.decode()
-                        logger.debug(f"Received message: {msg_body}")
+                        logger.info(f"Received message")
 
                         response: str = await self.msg_handler(msg_body)
 
@@ -63,7 +63,7 @@ class RmqRpcServer:
                             ),
                             routing_key=message.reply_to,
                         )
-                        logger.debug(f"Sent response: {response.encode()}")
+                        logger.info(f"Sent response")
         except AMQPException as err:
             logger.critical(f"Error: {err}", exc_info=True)
         except Exception as err:
