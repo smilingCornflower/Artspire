@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from src.config import logger
 from os import path
 from src.services.arts import ArtsService
+from src.schemas.arts import ArtOutFullSchema, ArtOutShortSchema
 
 if TYPE_CHECKING:
     from httpx import Response, AsyncClient
@@ -49,11 +50,13 @@ class TestArtsGet:
     async def test_without_params(self, async_client: "AsyncClient") -> None:
         # !! IMPORTANT !!: THIS TEST DEPENDS ON TestArtsPost
         response: "Response" = await async_client.get(arts_url)
-        result: "Any" = response.json()
+        result: list[dict] = response.json()
         logger.debug(f"result GET: {result}")
 
         assert response.status_code == 200
         assert len(result) == 3
+        for art in result:
+            assert ArtOutShortSchema.model_validate(art)
 
     @pytest.mark.parametrize(
         "offset, limit, length, status_code",
@@ -81,11 +84,13 @@ class TestArtsGet:
             assert len(result) == length
 
     async def test_with_tags(self, async_client: "AsyncClient") -> None:
-        query_params: dict = {"art_id": 1, "include_tags": True, "status_code": 200}
+        query_params: dict = {"art_id": 1, "status_code": 200}
         response: "Response" = await async_client.get("/arts", params=query_params)
         result: list[dict] = response.json()
         art: dict = result[0]
 
+        logger.debug(f"ArtOutFullSchema: : {ArtOutFullSchema.model_validate(art)}")
+        assert ArtOutFullSchema.model_validate(art)
         assert response.status_code == 200
         assert len(art["tags"]) == 3
 
@@ -112,7 +117,7 @@ class TestArtsDelete:
             async_client: "AsyncClient",
             art_id: int,
             status_code: int,
-            token_1: str
+            token_1: dict
     ) -> None:
         body: dict = {"art_id": art_id}
         response: "Response" = await async_client.request(

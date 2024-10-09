@@ -20,7 +20,7 @@ async def prepare_db() -> None:
                 f"INSERT INTO arts"
                 f" (user_id, blob_name, url, url_generated_at) VALUES"
                 f" (1, 'blob_1', 'url_1', clock_timestamp()),"
-                f" (2, 'blob_2', 'url_2', clock_timestamp());"
+                f" (1, 'blob_2', 'url_2', clock_timestamp());"
             )
             await session.execute(text(stmt))
 
