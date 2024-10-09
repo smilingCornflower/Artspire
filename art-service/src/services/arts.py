@@ -1,60 +1,69 @@
 # Standard libraries
+from abc import ABC, abstractmethod
 from datetime import datetime, timezone, timedelta
 import uuid
-import shortuuid
 from typing import TYPE_CHECKING
 
 # External libraries
+import shortuuid
 from google.cloud.exceptions import GoogleCloudError
 from sqlalchemy.exc import SQLAlchemyError
 
 # Local modules
-from schemas.arts import ArtCreateSchema, ArtUploadSchema, ArtEntity
 from bucket.s3_service import s3_service
+from config import logger
 from exceptions.http_exc import (
     ArtNotFoundHTTPException,
     InternalServerErrorHTTPException,
 )
-from config import logger
+from schemas.arts import (
+    ArtCreateSchema, ArtUploadSchema, ArtEntity, ArtOutShortSchema, ArtOutFullSchema
+)
 
 if TYPE_CHECKING:
+    from fastapi import UploadFile
     from repositories.arts import ArtRepository
     from repositories.art_to_tag import ArtToTagRepository
     from repositories.tags import TagRepository
-    from fastapi import UploadFile
-    from schemas.entities import TagEntity
+    from repositories.users_to_likes import UsersToLikesRepository
+    from schemas.entities import TagEntity, UsersToLikesEntity
 
 
-class ArtsService:
-    SIX_DAYS_IN_SECONDS: int = 6 * 24 * 3600
-    UNDELETED_BLOB_NAMES_FILE: str = "undeleted_blob_names.txt"
-
+class BaseArtsService:
     def __init__(
-        self,
-        art_repo: "ArtRepository",
-        art_to_tag_repo: "ArtToTagRepository",
-        tag_repo: "TagRepository",
+            self,
+            art_repo: "ArtRepository",
+            art_to_tag_repo: "ArtToTagRepository",
+            tag_repo: "TagRepository",
+            user_to_likes_repo: "UsersToLikesRepository",
     ) -> None:
         self.art_repo = art_repo
         self.art_to_tag_repo = art_to_tag_repo
         self.tag_repo = tag_repo
+        self.user_to_likes_repo = user_to_likes_repo
+
+
+class ArtsGetService(BaseArtsService):
+    SIX_DAYS_IN_SECONDS: int = 6 * 24 * 3600
 
     async def _refresh_art_url_if_needed(self, art: "ArtEntity") -> "ArtEntity":
         """
-        Refreshes the art URL if it is outdated.
+        Refresh the art URL if it is older than 6 days.
 
-        If the URL of the art is older than 6 days, a new URL is generated and the database entry
-        is updated with the new URL and timestamp.
+        This method checks the age of the art URL. If the URL is older than 6 days,
+        a new URL is generated and both the URL and the timestamp are updated in the database.
 
         :param art: The art entity to check and potentially update.
-        :return: The updated art entity if the URL was refreshed.
+        :return: The updated art entity with a refreshed URL, or the original if no refresh was needed.
+        :raises InternalServerErrorHTTPException: If there is an error generating the new URL or updating the database.
         """
+
         generated_at_dt: datetime = art.url_generated_at
         current_dt: datetime = datetime.now(tz=timezone.utc)
-        # With tzinfo it raises exceptions, IDK why, just don't touch it.
         current_dt: datetime = current_dt.replace(tzinfo=None)
-        dt_diff_in_seconds: float = (current_dt - generated_at_dt).total_seconds()
+        # With tzinfo it raises exceptions, IDK why, just don't touch it.
 
+        dt_diff_in_seconds: float = (current_dt - generated_at_dt).total_seconds()
         if dt_diff_in_seconds > self.SIX_DAYS_IN_SECONDS:
             try:
                 art_new_url: str = s3_service.create_url(art.blob_name)
@@ -71,22 +80,150 @@ class ArtsService:
             try:
                 await self.art_repo.update_one(model_id=art.id, data=to_refresh)
             except SQLAlchemyError as err:
-                logger.error("Error: {err}")
+                logger.critical("Error: {err}")
+                logger.debug(f"model_id: {art.id}; to_refresh: {to_refresh}")
                 raise InternalServerErrorHTTPException from err
             return new_art
         return art
 
-    async def _increase_views_count(self, art_id: int) -> None:
-        await self.art_repo.change_counter(art_id, number=1, counter_name="views")
+    async def _refresh_arts_url_if_needed(self, arts: list["ArtEntity"]) -> list["ArtEntity"]:
+        """
+        Refresh URLs for a list of art entities if they are outdated.
 
+        Iterates through the given list of arts, checking each for URL expiration
+        and refreshing them as needed.
+
+        :param arts: A list of art entities to check and refresh.
+        :return: A list of updated art entities.
+        """
+        logger.info(f"STARTED _refresh_arts_url_if_needed")
+        result: "list[ArtEntity]" = []
+        for art in arts:
+            refreshed_art: "ArtEntity" = await self._refresh_art_url_if_needed(art)
+            result.append(refreshed_art)
+        return result
+
+    async def _increase_views_count(self, art_id: int | None) -> None:
+        """
+        Increment the view count of a specific art by 1.
+
+        :param art_id: The ID of the art to increment the view count for.
+        """
+        if art_id:
+            await self.art_repo.change_counter(art_id, number=1, counter_name="views")
+
+    async def _get_liked_arts_for_user(self, user_id: int | None) -> set[int]:
+        """
+        Retrieve the IDs of arts liked by a specific user.
+
+        :param user_id: The ID of the user to retrieve liked arts for.
+        :return: A set of IDs of arts liked by the user.
+        """
+        if not user_id:
+            return set()
+        # noinspection PyTypeChecker
+        result_likes: "list[UsersToLikesEntity]" = await self.user_to_likes_repo.find_all(
+            filter_by={"user_id": user_id}
+        )
+        result_arts_id: set[int] = {i.art_id for i in result_likes}
+        return result_arts_id
+
+    @staticmethod
+    async def _get_prepared_out_arts(
+            arts: list["ArtEntity"], liked_arts: set, is_one_art: bool
+    ) -> "list[ArtOutShortSchema | ArtOutFullSchema]":
+        """
+        Prepare the output format for a list of arts, with like status.
+
+        Converts a list of art entities into their corresponding schema,
+        and marks each one as liked or not based on the provided set of liked art IDs.
+
+        :param arts: The list of art entities to convert.
+        :param liked_arts: A set of IDs of liked arts.
+        :param is_one_art: A flag indicating if a single art is being processed.
+        :return: A list of art schemas, either short or full format.
+        """
+        if is_one_art:
+            art_out_full_info: ArtOutFullSchema = ArtOutFullSchema.from_orm(arts[0])
+            art_out_full_info.is_liked = art_out_full_info.id in liked_arts
+            result: list = [art_out_full_info]
+        else:
+            result: "list[ArtOutShortSchema]" = []
+            for entity in arts:
+                art_out_short_info: "ArtOutShortSchema" = ArtOutShortSchema.from_orm(entity)
+                art_out_short_info.is_liked = art_out_short_info.id in liked_arts
+                result.append(art_out_short_info)
+        return result
+
+    async def get_arts(
+            self,
+            art_id: int | None = None,
+            offset: int | None = None,
+            limit: int | None = None,
+            include_tags: bool = False,
+            include_likes_for_user_id: int | None = None,
+    ) -> list:
+        """
+        Retrieve arts from the database with optional filtering, pagination, and additional options.
+
+        If `art_id` is provided, retrieves the art with that specific ID.
+        Otherwise, retrieves all arts with optional pagination and tag inclusion.
+        If the URLs of the arts are outdated, they are refreshed.
+        Optionally retrieves the like status of the arts for a specific user.
+
+        :param art_id: The ID of a specific art to retrieve, or None to retrieve all arts.
+        :param offset: The number of arts to skip for pagination.
+        :param limit: The maximum number of arts to retrieve.
+        :param include_tags: Whether to include associated tags for each art.
+        :param include_likes_for_user_id: The user ID to retrieve the like status for, or None.
+        :return: A list of art schemas, either in short or full format depending on the request.
+        :raises ArtNotFoundHTTPException: If no arts are found.
+        :raises InternalServerErrorHTTPException: If an error occurs in the database operation.
+        """
+        logger.warning(f"Started get_arts()")
+        try:
+            if art_id:
+                filter_condition: dict = {"id": art_id}
+            else:
+                filter_condition: dict = {}
+            if include_tags:
+                art_attributes: list | None = ["tags"]
+            else:
+                art_attributes: list | None = None
+            # noinspection PyTypeChecker
+            all_arts: list["ArtEntity"] = await self.art_repo.find_all(
+                filter_by=filter_condition,
+                offset=offset,
+                limit=limit,
+                joined_attributes=art_attributes)
+            if not all_arts:
+                raise ArtNotFoundHTTPException(detail="No art found")
+        except SQLAlchemyError as err:
+            logger.critical(f"Error: {err}")
+            logger.debug(
+                f"art_id: {art_id}; include_tags: {include_tags}; offset: {offset}; limit: {limit}"
+                f" include_likes_for_user_id: {include_likes_for_user_id}"
+            )
+            raise InternalServerErrorHTTPException from err
+
+        all_arts: list["ArtEntity"] = await self._refresh_arts_url_if_needed(arts=all_arts)
+        liked_arts: set = await self._get_liked_arts_for_user(user_id=include_likes_for_user_id)
+        result: "list[ArtOutShortSchema | ArtOutFullSchema]" = await self._get_prepared_out_arts(
+            arts=all_arts, liked_arts=liked_arts, is_one_art=bool(art_id),
+        )
+        logger.info(f"Finished get_arts()")
+        return result
+
+
+class ArtsAddRepository(BaseArtsService):
     async def add_art(
-        self,
-        art_data: "ArtUploadSchema",
-        art_file: "UploadFile",
-        create_tags: bool = True,
+            self,
+            art_data: "ArtUploadSchema",
+            art_file: "UploadFile",
+            create_tags: bool = True,
     ) -> int:
         """
-        Adds an artwork to the repository, along with optional tag creation.
+        Add a new art to the repository, with optional tag creation.
 
         This method handles the process of uploading an image file to S3 storage using
         `s3_service.upload_image()`. If the uploaded file is not a valid image,
@@ -97,15 +234,15 @@ class ArtsService:
         art record.
 
         If `create_tags` is set to True, the method also handles tag creation and association of
-        tags with the artwork. It first checks if the tags already exist, creates any missing tags,
-        and links them to the newly created artwork.
+        tags with the art. It first checks if the tags already exist, creates any missing tags,
+        and links them to the newly created art.
 
-        param art_data: The data related to the artwork, including user ID, title, and tags.
-        param art_file: The file object representing the artwork image to be uploaded.
-        param create_tags: If True, the method will create and associate tags with the artwork.
-        return: The ID of the newly created artwork record in the database.
-        raises InvalidImageTypeHTTPException: If the uploaded file is not a valid image.
-        raises InternalServerErrorHTTPException: If there is an error during the database operation.
+        :param art_data: The data related to the art, including user ID, title, and tags.
+        :param art_file: The file object representing the art image to be uploaded.
+        :param create_tags: If True, the method will create and associate tags with the art.
+        :return: The ID of the newly created art record in the database.
+        :raises InvalidImageTypeHTTPException: If the uploaded file is not a valid image.
+        :raises InternalServerErrorHTTPException: If there is an error during the database operation.
         """
         logger.warning("STARTED add_art()")
         blob_name: str = await s3_service.upload_image(
@@ -149,57 +286,9 @@ class ArtsService:
             raise InternalServerErrorHTTPException from err
         return new_art_id
 
-    async def get_arts(
-        self,
-        art_id: int | None = None,
-        offset: int | None = None,
-        limit: int | None = None,
-        include_tags: bool = False,
-    ) -> "list[ArtEntity]":
-        """
-        Retrieves a list of arts, optionally filtered by ID.
 
-        If `art_id` is provided, retrieves the art with that ID. Otherwise, retrieves all arts.
-        The URLs of the arts are refreshed if they are outdated.
-
-        param art_id: The ID of the art to retrieve, or None to get all arts.
-        param offset: The number of arts to skip, for pagination.
-        param limit: The maximum number of arts to return.
-        return: A list of `ArtEntity` objects.
-        raises ArtNotFoundHTTPException: If no arts are found.
-        raises InternalServerErrorHTTPException: If there is an error.
-        """
-        logger.warning(f"Started get_arts()")
-        if art_id:
-            filter_condition: dict = {"id": art_id}
-            await self._increase_views_count(art_id)
-        else:
-            filter_condition: dict = {}
-        try:
-            art_attributes: list[str] | None = None
-            if include_tags:
-                art_attributes = ["tags"]
-
-            # noinspection PyTypeChecker
-            all_arts: list["ArtEntity"] = await self.art_repo.find_all(
-                filter_by=filter_condition,
-                offset=offset,
-                limit=limit,
-                joined_attributes=art_attributes,
-            )
-        except SQLAlchemyError as err:
-            logger.error(f"Error: {err}")
-            raise InternalServerErrorHTTPException from err
-
-        if not all_arts:
-            raise ArtNotFoundHTTPException(detail="No art found")
-
-        result_arts: "list[ArtEntity]" = []
-        for art in all_arts:
-            refreshed_art: "ArtEntity" = await self._refresh_art_url_if_needed(art)
-            result_arts.append(refreshed_art)
-        logger.info(f"Finished get_arts()")
-        return result_arts
+class ArtsDeleteService(BaseArtsService):
+    UNDELETED_BLOB_NAMES_FILE: str = "undeleted_blob_names.txt"
 
     async def delete_art(self, art_id: int) -> bool:
         """
@@ -237,3 +326,7 @@ class ArtsService:
                 f.write(f"{art_entity.blob_name}\n")
 
         return True
+
+
+class ArtsService(ArtsGetService, ArtsAddRepository, ArtsDeleteService):
+    ...
