@@ -11,11 +11,13 @@ from sqlalchemy.exc import SQLAlchemyError
 
 # Local modules
 from bucket.s3_service import s3_service
+from rabbit.users_client import run_users_client
 from config import logger
 from exceptions.http_exc import (
     ArtNotFoundHTTPException,
     InternalServerErrorHTTPException,
 )
+
 from schemas.arts import (
     ArtCreateSchema, ArtUploadSchema, ArtEntity, ArtOutShortSchema, ArtOutFullSchema
 )
@@ -26,7 +28,7 @@ if TYPE_CHECKING:
     from repositories.art_to_tag import ArtToTagRepository
     from repositories.tags import TagRepository
     from repositories.users_to_likes import UsersToLikesRepository
-    from schemas.entities import TagEntity, UsersToLikesEntity
+    from schemas.entities import TagEntity, UsersToLikesEntity, UserEntity
 
 
 class BaseArtsService:
@@ -128,9 +130,8 @@ class ArtsGetService(BaseArtsService):
         result_arts_id: set[int] = {i.art_id for i in result_likes}
         return result_arts_id
 
-    @staticmethod
     async def _get_prepared_out_arts(
-            arts: list["ArtEntity"], liked_arts: set, is_one_art: bool
+            self, arts: list["ArtEntity"], user_id: int, is_one_art: bool
     ) -> "list[ArtOutShortSchema | ArtOutFullSchema]":
         """
         Prepare the output format for a list of arts, with like status.
@@ -139,13 +140,24 @@ class ArtsGetService(BaseArtsService):
         and marks each one as liked or not based on the provided set of liked art IDs.
 
         :param arts: The list of art entities to convert.
-        :param liked_arts: A set of IDs of liked arts.
+        :param user_id: The ID of the user for whom the liked arts are being searched.
         :param is_one_art: A flag indicating if a single art is being processed.
         :return: A list of art schemas, either short or full format.
         """
+        liked_arts: set = await self._get_liked_arts_for_user(user_id=user_id)
         if is_one_art:
-            art_out_full_info: ArtOutFullSchema = ArtOutFullSchema.from_orm(arts[0])
-            art_out_full_info.is_liked = art_out_full_info.id in liked_arts
+            art_entity: "ArtEntity" = arts[0]
+            user: dict[int, "UserEntity"] = await run_users_client(users_id=[art_entity.user_id])
+            logger.debug(f"user: {user}")
+            user: "UserEntity" = user[art_entity.user_id]
+
+            art_out_data: dict = {
+                **art_entity.model_dump(),
+                "username": user.username,
+                "profile_image": user.profile_image,
+                "is_liked": art_entity.id in liked_arts,
+            }
+            art_out_full_info: ArtOutFullSchema = ArtOutFullSchema.model_validate(art_out_data)
             result: list = [art_out_full_info]
         else:
             result: "list[ArtOutShortSchema]" = []
@@ -160,7 +172,6 @@ class ArtsGetService(BaseArtsService):
             art_id: int | None = None,
             offset: int | None = None,
             limit: int | None = None,
-            include_tags: bool = False,
             include_likes_for_user_id: int | None = None,
     ) -> list:
         """
@@ -175,7 +186,6 @@ class ArtsGetService(BaseArtsService):
         :param offset: The number of arts to skip for pagination.
         :param limit: The maximum number of arts to retrieve.
         :param include_tags: Whether to include associated tags for each art.
-        :param include_likes_for_user_id: The user ID to retrieve the like status for, or None.
         :return: A list of art schemas, either in short or full format depending on the request.
         :raises ArtNotFoundHTTPException: If no arts are found.
         :raises InternalServerErrorHTTPException: If an error occurs in the database operation.
@@ -184,11 +194,9 @@ class ArtsGetService(BaseArtsService):
         try:
             if art_id:
                 filter_condition: dict = {"id": art_id}
-            else:
-                filter_condition: dict = {}
-            if include_tags:
                 art_attributes: list | None = ["tags"]
             else:
+                filter_condition: dict = {}
                 art_attributes: list | None = None
             # noinspection PyTypeChecker
             all_arts: list["ArtEntity"] = await self.art_repo.find_all(
@@ -201,15 +209,14 @@ class ArtsGetService(BaseArtsService):
         except SQLAlchemyError as err:
             logger.critical(f"Error: {err}")
             logger.debug(
-                f"art_id: {art_id}; include_tags: {include_tags}; offset: {offset}; limit: {limit}"
+                f"art_id: {art_id}; offset: {offset}; limit: {limit}"
                 f" include_likes_for_user_id: {include_likes_for_user_id}"
             )
             raise InternalServerErrorHTTPException from err
 
         all_arts: list["ArtEntity"] = await self._refresh_arts_url_if_needed(arts=all_arts)
-        liked_arts: set = await self._get_liked_arts_for_user(user_id=include_likes_for_user_id)
         result: "list[ArtOutShortSchema | ArtOutFullSchema]" = await self._get_prepared_out_arts(
-            arts=all_arts, liked_arts=liked_arts, is_one_art=bool(art_id),
+            arts=all_arts, user_id=include_likes_for_user_id, is_one_art=bool(art_id),
         )
         logger.info(f"Finished get_arts()")
         return result
