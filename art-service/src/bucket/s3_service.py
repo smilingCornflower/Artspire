@@ -4,19 +4,35 @@ from exceptions.http_exc import (
     InvalidImageTypeHTTPException,
     InternalServerErrorHTTPException,
 )
+import io
 from typing import TYPE_CHECKING
 from google.cloud.exceptions import GoogleCloudError
-from utils.img import convert_to_jpg
 from config import logger, settings
+from typing import BinaryIO
 import shortuuid
-
-if TYPE_CHECKING:
-    from typing import BinaryIO
+from PIL import Image
 
 
 class S3Service(S3Client):
     IMG_TYPES: tuple[str] = ("image/jpeg", "image/png", "image/webp")
     JPEG: str = "image/jpeg"
+
+    @staticmethod
+    async def _convert_to_jpg(self, upload_file: BinaryIO) -> BinaryIO:
+        logger.info("STARTED convert_to_jpg()")
+        try:
+            image = Image.open(upload_file)
+            if image.mode == 'RGBA':
+                image = image.convert('RGB')
+
+            output = io.BytesIO()
+            image.save(output, format="JPEG")
+            output.seek(0)
+            return output
+
+        except OSError as err:
+            logger.critical("OSError occurred during image processing: %s", err)
+            raise err
 
     async def upload_image(self, image_file: UploadFile, user_id: int) -> str:
         """
@@ -43,8 +59,8 @@ class S3Service(S3Client):
 
         image_file: BinaryIO = image_file.file
         if image_type != self.JPEG:
-            logger.info(f"await convert_to_jpg(); image_type: {image_type}")
-            image_file = await convert_to_jpg(image_file)
+            logger.info(f"await self._convert_to_jpg(); image_type: {image_type}")
+            image_file = await self._convert_to_jpg(image_file)
 
         image_name: str = f"arts/{user_id}/{shortuuid.uuid()}.jpg"
         try:
