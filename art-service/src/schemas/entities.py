@@ -21,3 +21,8 @@ class TagEntity(BaseEntity):
 class UsersToSavesEntity(BaseEntity):
     user_id: int
     art_id: int
+
+
+class UsersToLikesEntity(BaseEntity):
+    user_id: int
+    art_id: int

@@ -49,6 +49,7 @@ class ArtOrm(Base):
             url_generated_at=self.url_generated_at,
             title=self.title,
             likes_count=self.likes_count,
+            views_count=self.views_count,
             created_at=self.created_at,
         )
         try:
