@@ -32,7 +32,7 @@ router = APIRouter(
     "",
     description=description_get_arts,
     tags=["arts"],
-    response_model=list[ArtOutFullSchema | ArtOutShortSchema]
+    response_model=list[ArtOutFullSchema] | list[ArtOutShortSchema]
 )
 async def get_arts(
     db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
@@ -40,7 +40,6 @@ async def get_arts(
     art_id: int | None = None,
     offset: int | None = None,
     limit: int | None = None,
-    include_tags: bool = False,
 ) -> list:
     if user_data:
         user_id = user_data.id
@@ -51,7 +50,6 @@ async def get_arts(
         art_id=art_id,
         offset=offset,
         limit=limit,
-        include_tags=include_tags,
         include_likes_for_user_id=user_id,
     )
     return one_or_all_arts

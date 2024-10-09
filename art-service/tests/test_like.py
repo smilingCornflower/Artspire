@@ -22,6 +22,7 @@ async def prepare_db() -> None:
                 f" (1, 'blob_1', 'url_1', clock_timestamp()),"
                 f" (1, 'blob_2', 'url_2', clock_timestamp());"
             )
+            # !! IMPORTANT !!: USER WITH USER_ID MUST EXISTS IN THE DATABASE
             await session.execute(text(stmt))
 
 

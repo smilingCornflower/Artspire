@@ -148,7 +148,6 @@ class ArtsGetService(BaseArtsService):
         if is_one_art:
             art_entity: "ArtEntity" = arts[0]
             user: dict[int, "UserEntity"] = await run_users_client(users_id=[art_entity.user_id])
-            logger.debug(f"user: {user}")
             user: "UserEntity" = user[art_entity.user_id]
 
             art_out_data: dict = {

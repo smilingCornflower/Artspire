@@ -8,7 +8,6 @@ description_get_arts: str = """
 - **art_id** (optional): The ID of the art entity to retrieve. If not provided, a list of arts will be returned.  
 - **offset** (optional): The number of arts to skip, for pagination.  
 - **limit** (optional): The maximum number of arts to return.  
-- **include_tags** (optional, default: False): If `True`, includes associated tags for each art entity.  
 
 **Returns:**  
 - **200 OK**: Returns a list of art entities or a single art, including any refreshed URLs and optional like status (if authenticated).  
