@@ -2,13 +2,15 @@ from typing import TYPE_CHECKING, Annotated
 
 from fastapi import APIRouter, Depends, UploadFile, Body
 
-from schemas.arts import ArtUploadSchema, ArtEntity
+from schemas.arts import ArtUploadSchema, ArtEntity, ArtOutFullSchema, ArtOutShortSchema
 from schemas.entities import UserEntity
 
 from api.dependencies import (
     get_art_upload_data,
     get_user_data,
+    get_user_data_or_none,
     get_db_gateway
+
 )
 from api.descriptions.art_descrs import (
     description_get_arts,
@@ -27,21 +29,30 @@ router = APIRouter(
 
 
 @router.get(
-    "", description=description_get_arts, tags=["arts"], response_model=list[ArtEntity]
+    "",
+    description=description_get_arts,
+    tags=["arts"],
+    response_model=list[ArtOutFullSchema | ArtOutShortSchema]
 )
 async def get_arts(
     db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
+    user_data: Annotated["UserEntity", Depends(get_user_data_or_none)],
     art_id: int | None = None,
     offset: int | None = None,
     limit: int | None = None,
     include_tags: bool = False,
 ) -> list:
+    if user_data:
+        user_id = user_data.id
+    else:
+        user_id = None
     art_service: "ArtsService" = db_gateway.get_arts_service()
-    one_or_all_arts: "list[ArtEntity]" = await art_service.get_arts(
+    one_or_all_arts: list = await art_service.get_arts(
         art_id=art_id,
         offset=offset,
         limit=limit,
         include_tags=include_tags,
+        include_likes_for_user_id=user_id,
     )
     return one_or_all_arts
 
