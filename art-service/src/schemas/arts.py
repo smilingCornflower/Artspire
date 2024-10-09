@@ -42,12 +42,15 @@ class ArtOutShortSchema(BaseModel):
 class ArtOutFullSchema(ArtOutShortSchema):
     id: int
     user_id: int
+    username: str
     url: str
+
+    profile_image: str | None
     title: str | None
-    likes_count: int = 0
-    views_count: int = 0
+    likes_count: int
+    views_count: int
     is_liked: bool = False
-    tags: list[TagEntity] | None = None
-    created_at: datetime | None = None
+    tags: list[TagEntity]
+    created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
