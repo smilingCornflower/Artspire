@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from fastapi.security.http import HTTPAuthorizationCredentials
 
 
+
 class CustomHTTPBearer(HTTPBearer):
     async def __call__(self, request: Request):
         try:
@@ -23,6 +24,7 @@ class CustomHTTPBearer(HTTPBearer):
 
 
 custom_http_bearer = CustomHTTPBearer()
+http_bearer_without_error = HTTPBearer(auto_error=False)
 
 
 async def get_user_data(
@@ -42,3 +44,11 @@ async def get_user_data(
         role_id=user_data["role_id"],
     )
     return user_data
+
+
+async def get_user_data_or_none(
+        credentials: "HTTPAuthorizationCredentials" = Depends(http_bearer_without_error)
+) -> UserEntity | None:
+    if credentials:
+        return await get_user_data(credentials=credentials)
+

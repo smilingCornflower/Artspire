@@ -35,6 +35,7 @@ class DBGateway:
             art_repo=ArtRepository(self.session),
             art_to_tag_repo=ArtToTagRepository(self.session),
             tag_repo=TagRepository(self.session),
+            user_to_likes_repo=UsersToLikesRepository(self.session),
         )
 
     def get_tags_service(self) -> TagsService:
@@ -62,6 +63,6 @@ class DBGateway:
 
 
 async def get_db_gateway(
-    session: "AsyncSession" = Depends(get_session),
+        session: "AsyncSession" = Depends(get_session),
 ) -> DBGateway:
     return DBGateway(session)
