@@ -66,12 +66,15 @@ async def get_token(data: dict) -> str:
 
 
 @pytest.fixture(scope="session", autouse=True)
-async def token_1() -> str:
+async def token_1() -> dict:
     user_data_1 = {"username": test_user_1_name, "password": test_user_1_password}
-    return await get_token(user_data_1)
+    token: str = await get_token(user_data_1)
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture(scope="session", autouse=True)
-async def token_2() -> str:
+async def token_2() -> dict:
     user_data_2 = {"username": test_user_2_name, "password": test_user_2_password}
-    return await get_token(user_data_2)
+    token: str = await get_token(user_data_2)
+    return {"Authorization": f"Bearer {token}"}
+

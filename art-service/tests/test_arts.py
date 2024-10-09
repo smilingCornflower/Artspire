@@ -35,11 +35,9 @@ class TestArtsPost:
         assert response.status_code == 401
 
     async def test_with_token(
-            self, async_client: "AsyncClient", token_1: str, token_2: str
+            self, async_client: "AsyncClient", token_1: dict, token_2: dict
     ) -> None:
-        headers: list[dict] = [{"Authorization": f"Bearer {token_1}"},
-                               {"Authorization": f"Bearer {token_1}"},
-                               {"Authorization": f"Bearer {token_2}"}]
+        headers: list[dict] = [token_1, token_1, token_2]
         for i in range(3):
             response: "Response" = await async_client.post(
                 arts_url, params=self.query_params[i], headers=headers[i], files=self.images[i]
@@ -116,19 +114,17 @@ class TestArtsDelete:
             status_code: int,
             token_1: str
     ) -> None:
-        headers = {"Authorization": f"Bearer {token_1}"}
         body: dict = {"art_id": art_id}
         response: "Response" = await async_client.request(
-            method="DELETE", url=arts_url, json=body, headers=headers
+            method="DELETE", url=arts_url, json=body, headers=token_1
         )
 
         assert response.status_code == status_code
 
     async def test_third_art(self, async_client, token_2) -> None:
-        headers = {"Authorization": f"Bearer {token_2}"}
         body: dict = {"art_id": 3}
         response: "Response" = await async_client.request(
-            method="DELETE", url=arts_url, json=body, headers=headers
+            method="DELETE", url=arts_url, json=body, headers=token_2
         )
 
         assert response.status_code == 200

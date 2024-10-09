@@ -46,11 +46,10 @@ class TestPostSave:
 
     @pytest.mark.parametrize("art_id", [1, 2, 3, 4])
     async def test_with_token_1(
-            self, async_client: "AsyncClient", token_1: str, art_id: int,
+            self, async_client: "AsyncClient", token_1: dict, art_id: int,
     ) -> None:
-        headers: dict = {"Authorization": f"Bearer {token_1}"}
         response: "Response" = await async_client.post(
-            save_url, json={"art_id": art_id}, headers=headers
+            save_url, json={"art_id": art_id}, headers=token_1
         )
         assert response.status_code == 201
 
@@ -63,10 +62,9 @@ class TestGetSave:
         assert response.status_code == 401
 
     async def test_with_token(
-            self, async_client: "AsyncClient", token_1: str
+            self, async_client: "AsyncClient", token_1: dict
     ) -> None:
-        headers: dict = {"Authorization": f"Bearer {token_1}"}
-        response: "Response" = await async_client.get(save_url, headers=headers)
+        response: "Response" = await async_client.get(save_url, headers=token_1)
         result: list[dict] = response.json()
 
         assert response.status_code == 200
@@ -79,16 +77,15 @@ class TestGetSave:
     async def test_offset_limit(
             self,
             async_client: "AsyncClient",
-            token_1: str,
+            token_1: dict,
             offset: int,
             limit: int,
             length: int,
             status_code: int,
     ) -> None:
-        headers: dict = {"Authorization": f"Bearer {token_1}"}
         query_params: dict = {"offset": offset, "limit": limit}
-        response: "Response" = await async_client.get(save_url, params=query_params,
-                                                      headers=headers)
+        response: "Response" = await async_client.get(
+            save_url, params=query_params, headers=token_1)
 
         assert response.status_code == status_code
         if length:
@@ -109,14 +106,13 @@ class TestDeleteSave:
     async def test_with_token(
             self,
             async_client: "AsyncClient",
-            token_1: str,
+            token_1: dict,
             art_id: int,
             status_code: int,
             result: bool
     ) -> None:
-        headers: dict = {"Authorization": f"Bearer {token_1}"}
         response: "Response" = await async_client.request(
-            method="DELETE", url=save_url, json={"art_id": art_id}, headers=headers,
+            method="DELETE", url=save_url, json={"art_id": art_id}, headers=token_1,
         )
         assert response.status_code == status_code
         assert response.json() is result
