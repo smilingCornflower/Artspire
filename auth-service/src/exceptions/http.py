@@ -1,15 +1,17 @@
 from fastapi import HTTPException, status
 
 
+# in this project status 452 is accepted as exception for "username already exists"
 class UsernameAlreadyExistHTTPException(HTTPException):
     def __init__(self):
-        super().__init__(status_code=status.HTTP_409_CONFLICT,
+        super().__init__(status_code=452,
                          detail="User with this username already exists")
 
 
+# in this project status 453 is accepted as exception for "username already exists"
 class EmailAlreadyExistsHTTPException(HTTPException):
     def __init__(self):
-        super().__init__(status_code=status.HTTP_409_CONFLICT,
+        super().__init__(status_code=453,
                          detail="User with this email already exists")
 
 

@@ -11,7 +11,8 @@ description_register: str = """
 
 **Responses**  
 - **201 Created**: Successful registration. Returns the ID of the newly created user.
-- **409 Conflict**: If the username or email is already in use.
+- **452 **: If the username already in use.
+- **453 **: If the email already in use.
 - **400 Bad Request**: If the password is too weak.
 - **422 Unprocessable Entity**: If an username or an email in wrong format.
 """
