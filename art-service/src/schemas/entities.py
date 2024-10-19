@@ -1,8 +1,6 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import EmailStr
 
-
-class BaseEntity(BaseModel):
-    ...
+from schemas.base import BaseEntity
 
 
 class UserEntity(BaseEntity):
@@ -11,11 +9,6 @@ class UserEntity(BaseEntity):
     email: EmailStr
     profile_image: str | None
     role_id: int = 1
-
-
-class TagEntity(BaseEntity):
-    id: int
-    name: str
 
 
 class UsersToSavesEntity(BaseEntity):

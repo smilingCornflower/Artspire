@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import insert as psql_insert
 
 if TYPE_CHECKING:
     from sqlalchemy import Select, Result
-    from schemas.entities import TagEntity
+    from schemas.tags import TagEntity
     from sqlalchemy.dialects.postgresql import Insert as PsqlInsert
 
 

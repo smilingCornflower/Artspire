@@ -1,4 +1,4 @@
-from schemas.entities import BaseEntity
+from schemas.base import BaseEntity
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 

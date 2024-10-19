@@ -8,7 +8,7 @@ from database.db import db_manager
 from models.arts import ArtOrm
 from repositories.repository import SQLAlchemyRepository
 from schemas.arts import ArtCreateDTO
-from schemas.entities import TagEntity
+from schemas.tags import TagEntity
 
 from .art_to_tag import ArtToTagRepository
 from .tags import TagRepository

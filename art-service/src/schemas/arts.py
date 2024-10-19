@@ -1,8 +1,8 @@
 from fastapi import UploadFile
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
-from schemas.entities import BaseEntity, TagEntity
-from .base import CustomBaseModel
+from .tags import TagEntity
+from .base import CustomBaseModel, BaseEntity
 
 
 class ArtEntity(CustomBaseModel):

@@ -28,7 +28,8 @@ if TYPE_CHECKING:
     from repositories.art_to_tag import ArtToTagRepository
     from repositories.tags import TagRepository
     from repositories.users_to_likes import UsersToLikesRepository
-    from schemas.entities import TagEntity, UsersToLikesEntity, UserEntity
+    from schemas.entities import UsersToLikesEntity, UserEntity
+    from schemas.tags import TagEntity
 
 
 class BaseArtsService:
