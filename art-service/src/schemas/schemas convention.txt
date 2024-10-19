@@ -1,3 +1,6 @@
+Methods: get, post, put, delete etc.
+Actions: get, create, update, delete.
+
 client --> service:
     ModelMethodSchema
 

@@ -12,7 +12,7 @@ class ArtPostSchema(CustomBaseModel):
     tags: list[str]
 
 
-class ArtCreateSchema(BaseModel):
+class ArtCreateDTO(BaseModel):
     user_id: int
     title: str | None
     url: str

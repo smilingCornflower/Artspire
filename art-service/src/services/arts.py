@@ -19,7 +19,7 @@ from exceptions.http_exc import (
 )
 
 from schemas.arts import (
-    ArtCreateSchema, ArtPostSchema, ArtEntity, ArtOutShortSchema, ArtOutFullSchema
+    ArtCreateDTO, ArtPostSchema, ArtEntity, ArtOutShortSchema, ArtOutFullSchema
 )
 
 if TYPE_CHECKING:
@@ -272,7 +272,7 @@ class ArtsAddRepository(BaseArtsService):
         url_generated_dt: datetime = datetime.now(tz=timezone.utc)
         url_generated_dt: datetime = url_generated_dt.replace(tzinfo=None)
 
-        art_create_data: "ArtCreateSchema" = ArtCreateSchema(
+        art_create_dto: "ArtCreateDTO" = ArtCreateDTO(
             user_id=art_data.user_id,
             title=art_data.title,
             url=art_url,
@@ -281,8 +281,8 @@ class ArtsAddRepository(BaseArtsService):
         )
         tag_names: list[str] = art_data.tags
         try:
-            logger.info(f"await self.art_repo.add_one(art_create_data.model_dump())")
-            new_art_id: int = await self.art_repo.add_one(art_create_data.model_dump())
+            logger.info(f"await self.art_repo.add_one(art_create_dto.model_dump())")
+            new_art_id: int = await self.art_repo.add_one(art_create_dto.model_dump())
             if create_tags:
                 tag_names_to_add_data: list[dict] = [
                     {"name": name} for name in tag_names
