@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Annotated
 
 from fastapi import APIRouter, Depends, UploadFile, Body
 
-from schemas.arts import ArtPostSchema, ArtEntity, ArtOutFullSchema, ArtOutShortSchema
+from schemas.arts import ArtPostSchema, ArtEntity, ArtGetResponseFull, ArtGetResponseShort
 from schemas.entities import UserEntity
 
 from api.dependencies import (
@@ -30,7 +30,7 @@ router = APIRouter(prefix="/arts")
     "",
     description=description_get_arts,
     tags=["arts"],
-    response_model=list[ArtOutFullSchema] | list[ArtOutShortSchema]
+    response_model=list[ArtGetResponseFull] | list[ArtGetResponseShort]
 )
 async def get_arts(
         db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],

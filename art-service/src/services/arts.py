@@ -19,7 +19,7 @@ from exceptions.http_exc import (
 )
 
 from schemas.arts import (
-    ArtCreateDTO, ArtPostSchema, ArtEntity, ArtOutShortSchema, ArtOutFullSchema
+    ArtCreateDTO, ArtPostSchema, ArtEntity, ArtGetResponseShort, ArtGetResponseFull
 )
 
 if TYPE_CHECKING:
@@ -132,7 +132,7 @@ class ArtsGetService(BaseArtsService):
 
     async def _get_prepared_out_arts(
             self, arts: list["ArtEntity"], user_id: int, is_one_art: bool
-    ) -> "list[ArtOutShortSchema | ArtOutFullSchema]":
+    ) -> "list[ArtGetResponseShort | ArtGetResponseFull]":
         """
         Prepare the output format for a list of arts, with like status.
 
@@ -156,12 +156,13 @@ class ArtsGetService(BaseArtsService):
                 "profile_image": user.profile_image,
                 "is_liked": art_entity.id in liked_arts,
             }
-            art_out_full_info: ArtOutFullSchema = ArtOutFullSchema.model_validate(art_out_data)
+            art_out_full_info: ArtGetResponseFull = ArtGetResponseFull.model_validate(art_out_data)
             result: list = [art_out_full_info]
         else:
-            result: "list[ArtOutShortSchema]" = []
+            result: "list[ArtGetResponseShort]" = []
             for entity in arts:
-                art_out_short_info: "ArtOutShortSchema" = ArtOutShortSchema.from_orm(entity)
+                entity: "ArtEntity"
+                art_out_short_info: "ArtGetResponseShort" = ArtGetResponseShort.model_validate(entity)
                 art_out_short_info.is_liked = art_out_short_info.id in liked_arts
                 result.append(art_out_short_info)
         return result
@@ -214,7 +215,7 @@ class ArtsGetService(BaseArtsService):
             raise InternalServerErrorHTTPException from err
 
         all_arts: list["ArtEntity"] = await self._refresh_arts_url_if_needed(arts=all_arts)
-        result: "list[ArtOutShortSchema | ArtOutFullSchema]" = await self._get_prepared_out_arts(
+        result: "list[ArtGetResponseShort | ArtGetResponseFull]" = await self._get_prepared_out_arts(
             arts=all_arts, user_id=include_likes_for_user_id, is_one_art=bool(art_id),
         )
         logger.info(f"Finished get_arts()")
