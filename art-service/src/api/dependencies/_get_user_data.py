@@ -10,7 +10,6 @@ if TYPE_CHECKING:
     from fastapi.security.http import HTTPAuthorizationCredentials
 
 
-
 class CustomHTTPBearer(HTTPBearer):
     async def __call__(self, request: Request):
         try:
@@ -51,4 +50,3 @@ async def get_user_data_or_none(
 ) -> UserEntity | None:
     if credentials:
         return await get_user_data(credentials=credentials)
-

@@ -2,11 +2,11 @@ from typing import TYPE_CHECKING, Annotated
 
 from fastapi import APIRouter, Depends, UploadFile, Body
 
-from schemas.arts import ArtUploadSchema, ArtEntity, ArtOutFullSchema, ArtOutShortSchema
+from schemas.arts import ArtPostSchema, ArtEntity, ArtOutFullSchema, ArtOutShortSchema
 from schemas.entities import UserEntity
 
 from api.dependencies import (
-    get_art_upload_data,
+    get_art_post_schema,
     get_user_data,
     get_user_data_or_none,
     get_db_gateway
@@ -23,9 +23,7 @@ if TYPE_CHECKING:
     from services.arts import ArtsService
     from api.dependencies.get_services import DBGateway
 
-router = APIRouter(
-    prefix="/arts",
-)
+router = APIRouter(prefix="/arts")
 
 
 @router.get(
@@ -35,11 +33,11 @@ router = APIRouter(
     response_model=list[ArtOutFullSchema] | list[ArtOutShortSchema]
 )
 async def get_arts(
-    db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
-    user_data: Annotated["UserEntity", Depends(get_user_data_or_none)],
-    art_id: int | None = None,
-    offset: int | None = None,
-    limit: int | None = None,
+        db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
+        user_data: Annotated["UserEntity", Depends(get_user_data_or_none)],
+        art_id: int | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
 ) -> list:
     if user_data:
         user_id = user_data.id
@@ -56,21 +54,14 @@ async def get_arts(
 
 
 @router.post(
-    "",
-    description=description_post_art,
-    tags=["arts"],
-    response_model=int,
-    status_code=201,
+    "", description=description_post_art, tags=["arts"], response_model=int, status_code=201
 )
 async def post_art(
-    art_file: UploadFile,
-    art_upload_data: Annotated["ArtUploadSchema", Depends(get_art_upload_data)],
-    db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
+        art_post_data: Annotated["ArtPostSchema", Depends(get_art_post_schema)],
+        db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
 ) -> int:
     art_service: "ArtsService" = db_gateway.get_arts_service()
-    new_art_id: int = await art_service.add_art(
-        art_data=art_upload_data, art_file=art_file
-    )
+    new_art_id: int = await art_service.add_art(art_data=art_post_data)
     return new_art_id
 
 
@@ -78,9 +69,9 @@ async def post_art(
     "", description=description_delete_art, response_model=bool, tags=["arts"]
 )
 async def delete_art(
-    db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
-    user_data: Annotated["UserEntity", Depends(get_user_data)],
-    art_id: int = Body(..., embed=True),
+        db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
+        user_data: Annotated["UserEntity", Depends(get_user_data)],
+        art_id: int = Body(..., embed=True),
 ) -> bool:
     art_service: "ArtsService" = db_gateway.get_arts_service()
 

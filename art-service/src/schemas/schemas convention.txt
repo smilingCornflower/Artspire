@@ -1,0 +1,12 @@
+client --> service:
+    ModelMethodSchema
+
+service --> client:
+    ModelMethodResponse
+
+service --> repository:
+    ModelActionDTO
+
+repository --> service:
+    ModelEntity
+

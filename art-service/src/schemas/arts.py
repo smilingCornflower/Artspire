@@ -1,11 +1,13 @@
+from fastapi import UploadFile
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
-
 from schemas.entities import BaseEntity, TagEntity
+from .base import CustomBaseModel
 
 
-class ArtUploadSchema(BaseModel):
+class ArtPostSchema(CustomBaseModel):
     user_id: int
+    art_file: UploadFile
     title: str | None
     tags: list[str]
 
