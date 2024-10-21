@@ -8,24 +8,57 @@ import io
 from typing import TYPE_CHECKING
 from google.cloud.exceptions import GoogleCloudError
 from config import logger, settings
-from typing import BinaryIO
+from typing import BinaryIO, TYPE_CHECKING
 import shortuuid
 from PIL import Image
+
+if TYPE_CHECKING:
+    from PIL import ImageFile, Image
+    from io import BytesIO
 
 
 class S3Service(S3Client):
     IMG_TYPES: tuple[str] = ("image/jpeg", "image/png", "image/webp")
     JPEG: str = "image/jpeg"
 
-    @staticmethod
-    async def _convert_to_jpg(self, upload_file: BinaryIO) -> BinaryIO:
-        logger.info("STARTED convert_to_jpg()")
-        try:
-            image = Image.open(upload_file)
-            if image.mode == 'RGBA':
-                image = image.convert('RGB')
+    async def _convert_to_jpg(self, image: "UploadFile") -> "BytesIO":
+        """
+        Converts the uploaded image to JPEG format if the image type is valid.
+        Supported image types are JPEG, PNG, and WEBP. If the image has an alpha channel (RGBA),
+        it will be converted to RGB for proper saving in JPEG format.
 
-            output = io.BytesIO()
+        Parameters:
+        ----------
+        image : UploadFile
+            The uploaded image file to be processed.
+
+        Returns:
+        ----------
+        BytesIO
+            A BytesIO object containing the image in JPEG format.
+
+        Raises:
+        ----------
+        InvalidImageTypeHTTPException
+            If the uploaded image type is not one of the supported types.
+        OSError
+            If an error occurs during the opening or processing of the image (e.g., if the image is corrupted).
+        """
+        logger.info("STARTED _convert_to_jpg()")
+        image_type: str = image.content_type
+        if image_type not in self.IMG_TYPES:
+            exception_text: str = f"Invalid image type: {image_type}. Expected one of: {', '.join(self.IMG_TYPES)}"
+            raise InvalidImageTypeHTTPException(detail=exception_text)
+
+        # type(image_file) --> SpooledTemporaryFile
+        image_file: "BinaryIO" = image.file
+
+        try:
+            image: "ImageFile" = Image.open(image_file)
+            if image.mode == 'RGBA':
+                image: "Image" = image.convert('RGB')
+
+            output: "BytesIO" = io.BytesIO()
             image.save(output, format="JPEG")
             output.seek(0)
             return output
@@ -52,19 +85,11 @@ class S3Service(S3Client):
         """
         logger.warning(f"Started upload_image()")
 
-        image_type: str = image_file.content_type
-        if image_type not in self.IMG_TYPES:
-            exception_text: str = f"Invalid image type: {image_type}. Expected one of: {', '.join(self.IMG_TYPES)}"
-            raise InvalidImageTypeHTTPException(detail=exception_text)
-
-        image_file: BinaryIO = image_file.file
-        if image_type != self.JPEG:
-            logger.info(f"await self._convert_to_jpg(); image_type: {image_type}")
-            image_file = await self._convert_to_jpg(image_file)
+        image_jpg = await self._convert_to_jpg(image=image_file)
 
         image_name: str = f"arts/{user_id}/{shortuuid.uuid()}.jpg"
         try:
-            blob_name: str = self.upload_file(file_obj=image_file, blob_name=image_name)
+            blob_name: str = self.upload_file(file_obj=image_jpg, blob_name=image_name)
             logger.info(f"FINISHED upload_image()")
         except GoogleCloudError as err:
             logger.error(f"Error: {err}")
