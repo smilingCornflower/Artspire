@@ -1,7 +1,7 @@
 from repositories.comments import CommentsRepository
 from repositories.arts import ArtRepository
 from schemas.comments import CommentCreateSchema, CommentEntity, CommentOutSchema
-from schemas.entities import UserEntity
+from schemas.user import UserEntity
 from sqlalchemy.exc import SQLAlchemyError
 from config import logger
 from rabbit.users_client import run_users_client

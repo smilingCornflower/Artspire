@@ -10,7 +10,7 @@ from sqlalchemy.orm import joinedload
 
 # Local
 from config import logger
-from schemas.entities import BaseEntity
+from schemas.base import BaseEntity
 
 # Type hints
 if TYPE_CHECKING:

@@ -19,7 +19,7 @@ from exceptions.http_exc import (
 )
 
 from schemas.arts import (
-    ArtCreateSchema, ArtUploadSchema, ArtEntity, ArtOutShortSchema, ArtOutFullSchema
+    ArtCreateDTO, ArtPostSchema, ArtEntity, ArtGetResponseShort, ArtGetResponseFull
 )
 
 if TYPE_CHECKING:
@@ -28,7 +28,9 @@ if TYPE_CHECKING:
     from repositories.art_to_tag import ArtToTagRepository
     from repositories.tags import TagRepository
     from repositories.users_to_likes import UsersToLikesRepository
-    from schemas.entities import TagEntity, UsersToLikesEntity, UserEntity
+    from schemas.user import UserEntity
+    from schemas.user_to_likes import UsersToLikesEntity
+    from schemas.tags import TagEntity
 
 
 class BaseArtsService:
@@ -132,7 +134,7 @@ class ArtsGetService(BaseArtsService):
 
     async def _get_prepared_out_arts(
             self, arts: list["ArtEntity"], user_id: int, is_one_art: bool
-    ) -> "list[ArtOutShortSchema | ArtOutFullSchema]":
+    ) -> "list[ArtGetResponseShort | ArtGetResponseFull]":
         """
         Prepare the output format for a list of arts, with like status.
 
@@ -156,12 +158,13 @@ class ArtsGetService(BaseArtsService):
                 "profile_image": user.profile_image,
                 "is_liked": art_entity.id in liked_arts,
             }
-            art_out_full_info: ArtOutFullSchema = ArtOutFullSchema.model_validate(art_out_data)
+            art_out_full_info: ArtGetResponseFull = ArtGetResponseFull.model_validate(art_out_data)
             result: list = [art_out_full_info]
         else:
-            result: "list[ArtOutShortSchema]" = []
+            result: "list[ArtGetResponseShort]" = []
             for entity in arts:
-                art_out_short_info: "ArtOutShortSchema" = ArtOutShortSchema.from_orm(entity)
+                entity: "ArtEntity"
+                art_out_short_info: "ArtGetResponseShort" = ArtGetResponseShort.model_validate(entity)
                 art_out_short_info.is_liked = art_out_short_info.id in liked_arts
                 result.append(art_out_short_info)
         return result
@@ -214,7 +217,7 @@ class ArtsGetService(BaseArtsService):
             raise InternalServerErrorHTTPException from err
 
         all_arts: list["ArtEntity"] = await self._refresh_arts_url_if_needed(arts=all_arts)
-        result: "list[ArtOutShortSchema | ArtOutFullSchema]" = await self._get_prepared_out_arts(
+        result: "list[ArtGetResponseShort | ArtGetResponseFull]" = await self._get_prepared_out_arts(
             arts=all_arts, user_id=include_likes_for_user_id, is_one_art=bool(art_id),
         )
         logger.info(f"Finished get_arts()")
@@ -224,8 +227,7 @@ class ArtsGetService(BaseArtsService):
 class ArtsAddRepository(BaseArtsService):
     async def add_art(
             self,
-            art_data: "ArtUploadSchema",
-            art_file: "UploadFile",
+            art_data: "ArtPostSchema",
             create_tags: bool = True,
     ) -> int:
         """
@@ -235,30 +237,45 @@ class ArtsAddRepository(BaseArtsService):
         `s3_service.upload_image()`. If the uploaded file is not a valid image,
         an `InvalidImageTypeHTTPException` is raised.
 
-        After a successful upload, the method generates a URL for accessing the image, stores it in
-        the database along with metadata from `art_data`, and returns the ID of the newly created
-        art record.
+        After a successful upload, the method generates a URL for accessing the image, stores it
+        in the database along with metadata from `art_data`, and returns the ID of the newly
+        created art record.
 
-        If `create_tags` is set to True, the method also handles tag creation and association of
-        tags with the art. It first checks if the tags already exist, creates any missing tags,
-        and links them to the newly created art.
+        If `create_tags` is set to True, the method also handles tag creation and association
+        of tags with the art. It first checks if the tags already exist, creates any missing
+        tags, and links them to the newly created art.
 
-        :param art_data: The data related to the art, including user ID, title, and tags.
-        :param art_file: The file object representing the art image to be uploaded.
+        :param art_data: A data structure containing all necessary information about the art
+            being uploaded.
+            - user_id (int): The ID of the user uploading the art. This is required for
+              associating the art with the user and for naming the file in S3 storage.
+            - art_file (UploadFile): The file representing the artwork to be uploaded. This
+              file is expected to be an image. If the file is not a valid image, the method will
+              raise an `InvalidImageTypeHTTPException`.
+            - title (str | None): optional field
+            - tags (list[str]): A list of tags associated with the artwork. Each tag represents
+              a keyword or category for the art. If `create_tags` is set to True, the method will
+              ensure that these tags are created in the system and associated with the uploaded
+              artwork. If the list is empty or not provided, no tags will be created or associated.
+
         :param create_tags: If True, the method will create and associate tags with the art.
+            The tags specified in `art_data.tags` will be checked, and any missing tags will be
+            created. The newly created tags (or existing ones) will then be linked to the artwork.
+
         :return: The ID of the newly created art record in the database.
+
         :raises InvalidImageTypeHTTPException: If the uploaded file is not a valid image.
-        :raises InternalServerErrorHTTPException: If there is an error during the database operation.
+        :raises InternalServerErrorHTTPException: If an error appears during the database operation.
         """
         logger.warning("STARTED add_art()")
         blob_name: str = await s3_service.upload_image(
-            image_file=art_file, user_id=art_data.user_id
+            image_file=art_data.art_file, user_id=art_data.user_id
         )
         art_url: str = s3_service.create_url(blob_name=blob_name)
         url_generated_dt: datetime = datetime.now(tz=timezone.utc)
         url_generated_dt: datetime = url_generated_dt.replace(tzinfo=None)
 
-        art_create_data: "ArtCreateSchema" = ArtCreateSchema(
+        art_create_dto: "ArtCreateDTO" = ArtCreateDTO(
             user_id=art_data.user_id,
             title=art_data.title,
             url=art_url,
@@ -267,8 +284,8 @@ class ArtsAddRepository(BaseArtsService):
         )
         tag_names: list[str] = art_data.tags
         try:
-            logger.info(f"await self.art_repo.add_one(art_create_data.model_dump())")
-            new_art_id: int = await self.art_repo.add_one(art_create_data.model_dump())
+            logger.info(f"await self.art_repo.add_one(art_create_dto.model_dump())")
+            new_art_id: int = await self.art_repo.add_one(art_create_dto.model_dump())
             if create_tags:
                 tag_names_to_add_data: list[dict] = [
                     {"name": name} for name in tag_names

@@ -1,24 +1,11 @@
+from fastapi import UploadFile
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
-
-from schemas.entities import BaseEntity, TagEntity
-
-
-class ArtUploadSchema(BaseModel):
-    user_id: int
-    title: str | None
-    tags: list[str]
+from .tags import TagEntity
+from .base import CustomBaseModel, BaseEntity
 
 
-class ArtCreateSchema(BaseModel):
-    user_id: int
-    title: str | None
-    url: str
-    blob_name: str
-    url_generated_at: datetime
-
-
-class ArtEntity(BaseEntity):
+class ArtEntity(CustomBaseModel):
     id: int
     user_id: int
     blob_name: str
@@ -31,15 +18,28 @@ class ArtEntity(BaseEntity):
     created_at: datetime | None = None
 
 
-class ArtOutShortSchema(BaseModel):
+class ArtPostSchema(CustomBaseModel):
+    user_id: int
+    art_file: UploadFile
+    title: str | None
+    tags: list[str]
+
+
+class ArtCreateDTO(CustomBaseModel):
+    user_id: int
+    title: str | None
+    url: str
+    blob_name: str
+    url_generated_at: datetime
+
+
+class ArtGetResponseShort(CustomBaseModel):
     id: int
     url: str
     is_liked: bool = False
 
-    model_config = ConfigDict(from_attributes=True)
 
-
-class ArtOutFullSchema(ArtOutShortSchema):
+class ArtGetResponseFull(CustomBaseModel):
     id: int
     user_id: int
     username: str
@@ -52,5 +52,3 @@ class ArtOutFullSchema(ArtOutShortSchema):
     is_liked: bool = False
     tags: list[TagEntity]
     created_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)

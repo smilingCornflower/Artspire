@@ -1,3 +1,5 @@
+import time
+
 import pytest
 import asyncio
 
@@ -7,7 +9,7 @@ from typing import TYPE_CHECKING
 from src.config import logger
 from os import path
 from src.services.arts import ArtsService
-from src.schemas.arts import ArtOutFullSchema, ArtOutShortSchema
+from src.schemas.arts import ArtGetResponseFull, ArtGetResponseShort
 
 if TYPE_CHECKING:
     from httpx import Response, AsyncClient
@@ -56,7 +58,7 @@ class TestArtsGet:
         assert response.status_code == 200
         assert len(result) == 3
         for art in result:
-            assert ArtOutShortSchema.model_validate(art)
+            assert ArtGetResponseShort.model_validate(art)
 
     @pytest.mark.parametrize(
         "offset, limit, length, status_code",
@@ -89,8 +91,8 @@ class TestArtsGet:
         result: list[dict] = response.json()
         art: dict = result[0]
 
-        logger.debug(f"ArtOutFullSchema: : {ArtOutFullSchema.model_validate(art)}")
-        assert ArtOutFullSchema.model_validate(art)
+        logger.debug(f"ArtOutFullSchema: : {ArtGetResponseFull.model_validate(art)}")
+        assert ArtGetResponseFull.model_validate(art)
         assert response.status_code == 200
         assert len(art["tags"]) == 3
 

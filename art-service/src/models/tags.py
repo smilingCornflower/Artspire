@@ -3,7 +3,7 @@ from sqlalchemy.orm import mapped_column as mc
 from sqlalchemy.orm import relationship
 from sqlalchemy import String, ForeignKey
 from database.base import Base
-from schemas.entities import TagEntity
+from schemas.tags import TagEntity
 
 
 class TagOrm(Base):

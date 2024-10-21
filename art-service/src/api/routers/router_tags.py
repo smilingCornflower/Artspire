@@ -10,7 +10,8 @@ from api.descriptions.tag_descrs import (
 )
 from api.routers.router import router
 from exceptions.http_exc import ForbiddenHTTPException
-from schemas.entities import UserEntity, TagEntity
+from schemas.user import UserEntity
+from schemas.tags import TagEntity
 from typing import Annotated
 
 if TYPE_CHECKING:
@@ -18,17 +19,13 @@ if TYPE_CHECKING:
 
 
 @router.post(
-    "/tags",
-    description=description_post_tag,
-    tags=["tags"],
-    response_model=None,
-    status_code=201,
+    "/tags", description=description_post_tag, tags=["tags"], response_model=None, status_code=201
 )
 async def post_tag(
         tag_name: Annotated[str, Body(..., embed=True, min_length=2, max_length=30)],
         db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
         user_data: "UserEntity" = Depends(get_user_data),
-) -> int:
+) -> None:
     tag_service: "TagsService" = db_gateway.get_tags_service()
     if user_data.role_id != 2:  # if user is not a moderator
         raise ForbiddenHTTPException
@@ -51,10 +48,7 @@ async def delete_tag(
 
 
 @router.get(
-    "/tags/search",
-    tags=["tags"],
-    description=description_search_tag,
-    response_model=list[TagEntity],
+    "/tags/search", tags=["tags"], description=description_search_tag, response_model=list[TagEntity],
 )
 async def search_tag(
         tag_part: str,

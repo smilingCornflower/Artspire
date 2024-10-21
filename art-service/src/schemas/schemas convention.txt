@@ -1,0 +1,15 @@
+Methods: get, post, put, delete etc.
+Actions: get, create, update, delete.
+
+client --> service:
+    ModelMethodSchema
+
+service --> client:
+    ModelMethodResponse
+
+service --> repository:
+    ModelActionDTO
+
+repository --> service:
+    ModelEntity
+

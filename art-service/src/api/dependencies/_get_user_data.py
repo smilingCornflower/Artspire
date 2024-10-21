@@ -4,11 +4,10 @@ from fastapi.security.http import HTTPBearer
 from rabbit.jwt_client import run_jwt_client
 from config import logger
 from exceptions.http_exc import UnauthorizedHTTPException
-from schemas.entities import UserEntity
+from schemas.user import UserEntity
 
 if TYPE_CHECKING:
     from fastapi.security.http import HTTPAuthorizationCredentials
-
 
 
 class CustomHTTPBearer(HTTPBearer):
@@ -51,4 +50,3 @@ async def get_user_data_or_none(
 ) -> UserEntity | None:
     if credentials:
         return await get_user_data(credentials=credentials)
-

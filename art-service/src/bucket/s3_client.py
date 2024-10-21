@@ -40,8 +40,9 @@ class S3Client:
         logger.warning("Started uploading file into bucket")
         try:
             blob: "Blob" = self.bucket.blob(blob_name=blob_name)
-            blob.upload_from_file(file_obj=file_obj, rewind=True)
             logger.debug(f"blob: {blob}")
+            logger.debug(f"file_obj: {file_obj}")
+            blob.upload_from_file(file_obj=file_obj, rewind=True)
             logger.info(f"Finished uploading file into bucket")
             return blob.name
         except GoogleCloudError as err:
