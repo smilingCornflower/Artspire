@@ -4,7 +4,7 @@ from fastapi.security.http import HTTPBearer
 from rabbit.jwt_client import run_jwt_client
 from config import logger
 from exceptions.http_exc import UnauthorizedHTTPException
-from schemas.entities import UserEntity
+from schemas.user import UserEntity
 
 if TYPE_CHECKING:
     from fastapi.security.http import HTTPAuthorizationCredentials

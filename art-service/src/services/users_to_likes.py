@@ -3,6 +3,7 @@ from exceptions.http_exc import ArtNotFoundHTTPException, InternalServerErrorHTT
 
 from sqlalchemy.exc import SQLAlchemyError
 from config import logger
+from schemas.user_to_likes import UsersToLikesCreateDTO
 
 if TYPE_CHECKING:
     from repositories.users_to_likes import UsersToLikesRepository
@@ -35,9 +36,11 @@ class UsersToLikesService:
         if not seeking_result:
             raise ArtNotFoundHTTPException(f"Art with id: {art_id} not found")
 
-        to_add: dict = {"user_id": user_id, "art_id": art_id}
+        user_to_likes_dto: "UsersToLikesCreateDTO" = UsersToLikesCreateDTO(
+            user_id=user_id, art_id=art_id
+        )
         try:
-            result_rowcount: int = await self.repo.add_one(data=to_add)
+            result_rowcount: int = await self.repo.add_one(data=user_to_likes_dto.model_dump())
             logger.info(f"Finished like_art(), rowcount={result_rowcount}")
         except SQLAlchemyError as err:
             raise InternalServerErrorHTTPException from err

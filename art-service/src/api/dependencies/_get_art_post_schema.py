@@ -8,7 +8,7 @@ from schemas.arts import ArtPostSchema
 from config import logger
 
 if TYPE_CHECKING:
-    from schemas.entities import UserEntity
+    from schemas.user import UserEntity
 
 TAGS_REGEX: str = r"^(\w+)+(,\w+)*$"
 

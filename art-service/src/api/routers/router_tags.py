@@ -10,7 +10,7 @@ from api.descriptions.tag_descrs import (
 )
 from api.routers.router import router
 from exceptions.http_exc import ForbiddenHTTPException
-from schemas.entities import UserEntity
+from schemas.user import UserEntity
 from schemas.tags import TagEntity
 from typing import Annotated
 

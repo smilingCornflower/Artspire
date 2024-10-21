@@ -9,7 +9,7 @@ from api.descriptions.comment_descr import (
     description_get_comments,
 )
 from schemas.comments import CommentUploadSchema, CommentCreateSchema, CommentOutSchema
-from schemas.entities import UserEntity
+from schemas.user import UserEntity
 
 if TYPE_CHECKING:
     from services.comments import CommentsService

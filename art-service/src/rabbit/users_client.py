@@ -1,7 +1,7 @@
 from .rpc_client import run_rpc_client, RmqRpcClient
 import json
 from config import logger
-from schemas.entities import UserEntity
+from schemas.user import UserEntity
 
 USERS_REQUEST: str = "users_request"
 

@@ -3,14 +3,14 @@ from exceptions.http_exc import ArtNotFoundHTTPException, InternalServerErrorHTT
 
 from sqlalchemy.exc import SQLAlchemyError
 from config import logger
-
+from schemas.user_to_saves import UsersToSavesCreateDTO
 
 if TYPE_CHECKING:
     from repositories.users_to_saves import UsersToSavesRepository
     from repositories.arts import ArtRepository
     from repositories.tags import TagRepository
     from repositories.art_to_tag import ArtToTagRepository
-    from schemas.entities import UsersToSavesEntity
+    from schemas.user_to_saves import UsersToSavesEntity
     from schemas.arts import ArtEntity
 
 
@@ -39,9 +39,11 @@ class UsersToSavesService:
         if not seeking_result:
             raise ArtNotFoundHTTPException(f"Art with id: {art_id} not found")
 
-        to_add: dict = {"user_id": user_id, "art_id": art_id}
+        user_to_saves_dto: "UsersToSavesCreateDTO" = UsersToSavesCreateDTO(
+            user_id=user_id, art_id=art_id
+        )
         try:
-            result_rowcount: int = await self.repo.add_one(data=to_add)
+            result_rowcount: int = await self.repo.add_one(data=user_to_saves_dto.model_dump())
             logger.info(f"Finished save_art(), rowcount={result_rowcount}")
         except SQLAlchemyError as err:
             raise InternalServerErrorHTTPException from err

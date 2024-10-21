@@ -35,10 +35,10 @@ class ArtOrm(Base):
     views_count: M[int] = mc(default=0, server_default=text("0"), nullable=False)
 
     tags = relationship("TagOrm", secondary="arts_to_tags", back_populates="arts")
+    likes = relationship("UsersToLikesOrm", back_populates="art", cascade="all, delete")
+    saves = relationship("UsersToSavesOrm", back_populates="art", cascade="all, delete")
 
-    created_at: M[datetime] = mc(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at: M[datetime] = mc(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     def to_entity(self) -> "ArtEntity":
         art_entity: "ArtEntity" = ArtEntity(

@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Annotated
 from fastapi import APIRouter, Depends, UploadFile, Body
 
 from schemas.arts import ArtPostSchema, ArtEntity, ArtGetResponseFull, ArtGetResponseShort
-from schemas.entities import UserEntity
+from schemas.user import UserEntity
 
 from api.dependencies import (
     get_art_post_schema,

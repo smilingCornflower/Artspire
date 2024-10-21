@@ -14,7 +14,7 @@ from api.descriptions.user_like_descrs import (
     description_delete_user_like,
 )
 from api.routers.router import router
-from schemas.entities import UserEntity
+from schemas.user import UserEntity
 from schemas.arts import ArtEntity
 
 if TYPE_CHECKING:
