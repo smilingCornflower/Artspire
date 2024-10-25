@@ -49,7 +49,7 @@ class Settings(BaseSettings):
 
     jwt_private_key_path: Path = auth_dir / "secrets/jwt-private.pem"
     jwt_public_key_path: Path = auth_dir / "secrets/jwt-public.pem"
-    jwt_access_token_expire_minutes: int = 30
+    jwt_access_token_expire_minutes: int = 5
     jwt_refresh_token_expire_minutes: int = 30 * 24 * 60
 
     logs_path: Path = auth_dir / "logs/debug.log"
@@ -61,6 +61,9 @@ class Settings(BaseSettings):
         "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
         "pk": "pk_%(table_name)s"
     }
+
+    private_profile_status_code: int = 227
+    public_profile_status_code: int = 228
 
 
 settings = Settings()
