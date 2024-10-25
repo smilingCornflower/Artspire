@@ -59,3 +59,21 @@ description_me = """
 - **200 OK**: Successfully retrieves and decodes the token. Returns user information in the following JSON format:
 - **401 Unauthorized**: If the Bearer token is invalid, expired, or missing.
 """
+description_profile: str = """
+**Description**  
+- Retrieves the profile information of a specified user by their username.
+- If the authenticated user's username matches the specified username, a private view with more details is returned.
+- Otherwise, a public view of the profile is returned.
+
+**Request Query**  
+- **username**: The username of the profile to retrieve.
+
+**Request Header**  
+- **Authorization**: Bearer token for authentication.
+
+**Responses**  
+- **227**: Successfully retrieved the private profile (for the authenticated user).
+- **228**: Successfully retrieved the public profile (for other users).
+- **404 Not Found**: If the specified username does not exist.
+- **401 Unauthorized**: If the Bearer token is invalid, expired, or missing.
+"""

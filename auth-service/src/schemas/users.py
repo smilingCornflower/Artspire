@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 
 
 class UserCreateSchema(BaseModel):
@@ -30,3 +30,19 @@ class UserEntity(BaseModel):
 
     role_id: int
     is_active: bool
+
+
+class UserProfilePrivate(BaseModel):
+    id: int
+    username: str
+    profile_image: str | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserProfilePublic(BaseModel):
+    id: int
+    username: str
+    profile_image: str | None
+
+    model_config = ConfigDict(from_attributes=True)

@@ -34,9 +34,9 @@ class UserNotActiveHTTPException(HTTPException):
 
 
 class UnauthorizedHTTPException(HTTPException):
-    def __init__(self):
+    def __init__(self, detail: str = "Invalid username or password"):
         super().__init__(status_code=status.HTTP_401_UNAUTHORIZED,
-                         detail="Invalid username or password")
+                         detail=detail)
 
 
 class InvalidTokenHTTPException(HTTPException):
@@ -51,3 +51,8 @@ class InvalidTokenTypeHTTPException(InvalidTokenHTTPException):
         super().__init__(
             detail=f"Invalid token type: {received_type}, expected: {expected_type}"
         )
+
+
+class UserNotFoundHTTPException(HTTPException):
+    def __init__(self, status_code: int = status.HTTP_404_NOT_FOUND, detail: str = "User Not Found"):
+        super().__init__(status_code=status_code, detail=detail)

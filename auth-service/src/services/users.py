@@ -6,6 +6,8 @@ from schemas.users import (
     UserLoginSchema,
     UserEntity,
     UserReadSchema,
+    UserProfilePrivate,
+    UserProfilePublic
 )
 from schemas.tokens import TokenInfoSchema, AccessTokenSchema
 from utils.password import hash_password, check_password
@@ -18,6 +20,7 @@ from exceptions.http import (
     WeakPasswordHTTPException,
     UnauthorizedHTTPException,
     UserNotActiveHTTPException,
+    UserNotFoundHTTPException,
 )
 
 
@@ -126,3 +129,30 @@ class UserService:
             users_info.append(user_info)
         logger.info(f"Retrieved information for {len(users_info)} users.")
         return users_info
+
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    async def get_profile_by_username(
+            self, username: str, private: bool = False
+    ) -> "UserProfilePrivate | UserProfilePublic":
+        logger.info(f"Retrieving profile for username: {username}, private view: {private}")
+
+        result_users: list[UserEntity] = await self.user_repo.find_all({"username": username})
+
+        if not result_users:
+            logger.warning(f"User '{username}' not found")
+            raise UserNotFoundHTTPException(detail="User with such username not found")
+
+        user = result_users[0]
+        logger.info(f"User '{username}' found")
+
+        if private:
+            user_profile = UserProfilePrivate.model_validate(user)
+        else:
+            user_profile = UserProfilePublic.model_validate(user)
+
+        logger.debug(f"Profile data for user '{username}': {user_profile}")
+
+        return user_profile

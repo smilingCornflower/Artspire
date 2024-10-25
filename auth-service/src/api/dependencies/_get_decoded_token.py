@@ -1,5 +1,5 @@
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi import Depends, HTTPException, Cookie
+from fastapi import Depends, HTTPException, Cookie, Request
 from utils.jwt_utils import (
     decode_jwt,
     TOKEN_TYPE_FIELD,
@@ -9,6 +9,7 @@ from utils.jwt_utils import (
 from exceptions.http import (
     InvalidTokenTypeHTTPException,
     InvalidTokenHTTPException,
+    UnauthorizedHTTPException,
 )
 from jwt.exceptions import PyJWTError, ExpiredSignatureError
 from config import settings, logger
@@ -32,13 +33,15 @@ def _get_decoded_token(
         raise InvalidTokenHTTPException
     except Exception as err:
         logger.debug(f"Unexpected exception: {err}")
+        raise err
 
     decoded_token_type: str = decoded_token.get(TOKEN_TYPE_FIELD)
     logger.debug(f"decoded_token_type: {decoded_token_type}")
 
     if decoded_token_type != token_type:
         logger.debug(f"in InvalidTokenTypeHTTPException")
-        raise InvalidTokenTypeHTTPException(received_type=decoded_token_type, expected_type=token_type)
+        raise InvalidTokenTypeHTTPException(received_type=decoded_token_type,
+                                            expected_type=token_type)
 
     return decoded_token
 

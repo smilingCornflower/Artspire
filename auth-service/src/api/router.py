@@ -4,9 +4,9 @@ from schemas.users import (
     UserLoginSchema,
     UserReadSchema,
 )
-from config import logger
+from config import logger, settings
 from utils.set_httponly import set_refresh_in_httponly
-from services.users import UserService
+from services.users import UserService, UserProfilePublic, UserProfilePrivate
 from schemas.tokens import TokenInfoSchema, AccessTokenSchema
 from .dependencies import (
     get_user_service,
@@ -20,6 +20,7 @@ from .descriptions import (
     description_login,
     description_refresh,
     description_me,
+    description_profile
 )
 from typing import Annotated
 
@@ -70,3 +71,24 @@ async def current_user_info(
         user: Annotated[UserReadSchema, Depends(get_current_user)]
 ) -> UserReadSchema:
     return user
+
+
+@router.get("/profile",
+            description=description_profile,
+            response_model=UserProfilePublic | UserProfilePrivate,
+            status_code=settings.public_profile_status_code | settings.private_profile_status_code
+            )
+async def get_profile_by_username(
+        user: Annotated[UserReadSchema, Depends(get_current_user)],
+        username: str,
+        user_service: Annotated[UserService, Depends(get_user_service)],
+        response: Response,
+):
+    if user.username == username:
+        profile_info = await user_service.get_profile_by_username(username=username, private=True)
+        response.status_code = settings.private_profile_status_code
+    else:
+        profile_info = await user_service.get_profile_by_username(username=username)
+        response.status_code = settings.public_profile_status_code
+
+    return profile_info
