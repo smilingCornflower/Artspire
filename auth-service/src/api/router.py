@@ -24,7 +24,7 @@ from .descriptions import (
     description_login,
     description_refresh,
     description_me,
-    description_profile
+    description_profile,
     description_post_subscribe,
 )
 from typing import Annotated
