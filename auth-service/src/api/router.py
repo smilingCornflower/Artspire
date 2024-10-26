@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, status, Response
+from fastapi import APIRouter, Depends, status, Response, Body
 from schemas.users import (
     UserCreateSchema,
     UserLoginSchema,
     UserReadSchema,
 )
+from services.users import UserService
+from services.subscriptions import SubscriptionsService
 from config import logger
 from utils.set_httponly import set_refresh_in_httponly
-from services.users import UserService
 from schemas.tokens import TokenInfoSchema, AccessTokenSchema
 from .dependencies import (
     get_user_service,
@@ -14,12 +15,14 @@ from .dependencies import (
     get_decoded_refresh_token,
     get_user_create_data,
     get_user_login_data,
+    get_subscription_service,
 )
 from .descriptions import (
     description_register,
     description_login,
     description_refresh,
     description_me,
+    description_post_subscribe,
 )
 from typing import Annotated
 
@@ -70,3 +73,14 @@ async def current_user_info(
         user: Annotated[UserReadSchema, Depends(get_current_user)]
 ) -> UserReadSchema:
     return user
+
+
+@router.post("/subscribe",
+             description=description_post_subscribe, response_model=bool, status_code=200)
+async def subscribe_to_artist(
+        user: Annotated[UserReadSchema, Depends(get_current_user)],
+        subscription_service: Annotated[SubscriptionsService, Depends(get_subscription_service)],
+        artist_id: Annotated[int, Body(embed=True)],
+) -> bool:
+    result: bool = await subscription_service.add_subscription(user.id, artist_id)
+    return result

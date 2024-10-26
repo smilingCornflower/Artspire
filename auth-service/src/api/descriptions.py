@@ -59,3 +59,17 @@ description_me = """
 - **200 OK**: Successfully retrieves and decodes the token. Returns user information in the following JSON format:
 - **401 Unauthorized**: If the Bearer token is invalid, expired, or missing.
 """
+description_post_subscribe = """
+**Description**  
+- Adds a subscription for the current user to follow a specific artist.
+- Uses the current user's ID (retrieved from the access token) and the provided **artist_id** to create a new subscription.
+- If the user is already subscribed to the artist, the request will have no effect, and the response will indicate that no new subscription was created.
+
+**Request Body**  
+- **artist_id**: ID of the artist user to subscribe to.
+
+**Responses**  
+- **200 OK**: Subscription successfully added or already exists. Returns *True* if a new subscription was created, *False* if the subscription already existed.
+- **401 Unauthorized**: If the user is not authenticated or the access token is invalid.
+- **404 Not Found**: If the artist with the provided ID does not exist.
+"""
