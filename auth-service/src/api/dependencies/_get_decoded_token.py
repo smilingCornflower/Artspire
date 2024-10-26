@@ -15,7 +15,20 @@ from jwt.exceptions import PyJWTError, ExpiredSignatureError
 from config import settings, logger
 from typing import Callable
 
-get_http_bearer = HTTPBearer()
+
+class CustomHTTPBearer(HTTPBearer):
+    async def __call__(self, request: Request):
+        try:
+            credentials = await super().__call__(request)
+            return credentials
+        except HTTPException:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or missing token"
+            )
+
+
+custom_http_bearer = CustomHTTPBearer()
 
 
 def _get_decoded_token(
@@ -47,7 +60,7 @@ def _get_decoded_token(
 
 
 def get_decoded_access_token(
-        credentials: HTTPAuthorizationCredentials = Depends(get_http_bearer)
+        credentials: HTTPAuthorizationCredentials = Depends(custom_http_bearer)
 ) -> dict:
     logger.debug(f"I am here")
     return _get_decoded_token(token_type=ACCESS_TOKEN_TYPE, token=credentials.credentials)
