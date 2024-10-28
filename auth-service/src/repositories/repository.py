@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from sqlalchemy import insert, select, and_
+from sqlalchemy import insert, select, delete, update, and_
 from database.db import db_manager
 from config import settings, logger
 
 # Annotation
-from sqlalchemy import Select, Insert, ChunkedIteratorResult
+from sqlalchemy import Select, Insert, Delete, ChunkedIteratorResult, Result
 from sqlalchemy.sql.expression import BinaryExpression
 from sqlalchemy.orm import DeclarativeMeta
 
@@ -12,11 +12,16 @@ from sqlalchemy.orm import DeclarativeMeta
 class AbstractRepository(ABC):
     @abstractmethod
     async def add_one(self, data):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     async def find_all(self, filter_by):
-        raise NotImplemented
+        raise NotImplementedError
+
+    @abstractmethod
+    async def delete_one(self, delete_by):
+        raise NotImplementedError
+
 
 
 class SQLAlchemyRepository(AbstractRepository):
@@ -41,10 +46,10 @@ class SQLAlchemyRepository(AbstractRepository):
                 for key, value in filter_by.items():
                     if hasattr(self.model, key):
                         if isinstance(value, list):
-                            expression: "BinaryExpression" = getattr(self.model, key).in_(value)
+                            expression: BinaryExpression = getattr(self.model, key).in_(value)
                         else:
                             # noinspection PyTypeChecker
-                            expression: "BinaryExpression" = getattr(self.model, key) == value
+                            expression: BinaryExpression = getattr(self.model, key) == value
                         conditions.append(expression)
                 if conditions:
                     stmt = stmt.where(and_(*conditions))
@@ -53,3 +58,37 @@ class SQLAlchemyRepository(AbstractRepository):
             entities: list = [row[0].to_entity() for row in result.all()]
             logger.info(f"Retrieved {len(entities)} records from {self.model.__name__}")
             return entities
+
+    async def delete_one(self, delete_by: dict) -> bool:
+        logger.warning(f"STARTED delete_one({delete_by})")
+        conditions: list[BinaryExpression] = []
+        for key, value in delete_by.items():
+            if not hasattr(self.model, key):
+                raise AttributeError(f"A model {self.model} has no attribute {key}")
+            # noinspection PyTypeChecker
+            expression: BinaryExpression = getattr(self.model, key) == value
+            conditions.append(expression)
+        if not conditions:
+            raise ValueError(f"Conditions must contain at least one entry")
+
+        async with db_manager.async_session_maker() as session:
+            async with session.begin():
+                stmt: Delete = delete(self.model).where(and_(*conditions))
+                result: Result = await session.execute(stmt)
+
+                if result.rowcount == 1:
+                    logger.info(
+                        f"SUCCESS: Deleted a record in {self.model.__name__} matching {delete_by}")
+
+                    return True
+                elif result.rowcount == 0:
+                    logger.warning(
+                        f"No records found in {self.model.__name__} matching {delete_by}")
+
+                    return False
+                else:
+                    session.rollback()
+                    logger.critical(
+                        f"ROLLBACK: delete_one() affected more than one row for {delete_by}")
+                    return False
+

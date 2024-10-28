@@ -1,4 +1,4 @@
-from repositories.repository import AbstractRepository
+from repositories.users import UserRepository
 from config import settings, logger
 from fastapi import Response
 from schemas.users import (
@@ -48,7 +48,7 @@ def create_token_for_user(user: UserEntity, include_refresh: bool = True) -> Tok
 
 
 class UserService:
-    def __init__(self, user_repo: AbstractRepository):
+    def __init__(self, user_repo: UserRepository):
         self.user_repo = user_repo
 
     async def add_user(self, user_create_data: UserCreateSchema) -> int:
@@ -147,7 +147,6 @@ class UserService:
 
         user = result_users[0]
         logger.info(f"User '{username}' found")
-
         if private:
             user_profile = UserProfilePrivate.model_validate(user)
         else:

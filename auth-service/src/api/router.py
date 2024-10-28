@@ -26,16 +26,17 @@ from .descriptions import (
     description_me,
     description_profile,
     description_post_subscribe,
+    description_post_unsubscribe,
 )
 from typing import Annotated
 
 router = APIRouter(
     prefix="/users",
-    tags=["Users"]
 )
 
 
-@router.post("/register", response_model=int, description=description_register,
+@router.post("/register", tags=["users"],
+             response_model=int, description=description_register,
              status_code=status.HTTP_201_CREATED)
 async def register_user(
         user_create_data: Annotated[UserCreateSchema, Depends(get_user_create_data)],
@@ -45,7 +46,8 @@ async def register_user(
     return new_user_id
 
 
-@router.post("/login", response_model=AccessTokenSchema, description=description_login)
+@router.post("/login", tags=["users"],
+             response_model=AccessTokenSchema, description=description_login)
 async def login_user(
         response: Response,
         user_login_data: Annotated[UserLoginSchema, Depends(get_user_login_data)],
@@ -56,7 +58,8 @@ async def login_user(
     return token_data
 
 
-@router.post("/refresh", description=description_refresh, response_model=AccessTokenSchema,
+@router.post("/refresh", tags=["users"],
+             description=description_refresh, response_model=AccessTokenSchema,
              status_code=status.HTTP_201_CREATED)
 async def refresh_jwt(
         decoded_refresh: Annotated[dict, Depends(get_decoded_refresh_token)],
@@ -71,15 +74,15 @@ async def refresh_jwt(
     return access_token
 
 
-@router.get("/me", description=description_me, response_model=UserReadSchema)
+@router.get("/me", tags=["users"],
+            description=description_me, response_model=UserReadSchema)
 async def current_user_info(
         user: Annotated[UserReadSchema, Depends(get_current_user)]
 ) -> UserReadSchema:
     return user
 
 
-@router.get("/profile",
-            description=description_profile,
+@router.get("/profile", tags=["users"], description=description_profile,
             response_model=UserProfilePublic | UserProfilePrivate,
             status_code=settings.public_profile_status_code | settings.private_profile_status_code
             )
@@ -99,7 +102,7 @@ async def get_profile_by_username(
     return profile_info
 
 
-@router.post("/subscribe",
+@router.post("/subscribe", tags=["subscription"],
              description=description_post_subscribe, response_model=bool, status_code=200)
 async def subscribe_to_artist(
         user: Annotated[UserReadSchema, Depends(get_current_user)],
@@ -107,4 +110,15 @@ async def subscribe_to_artist(
         artist_id: Annotated[int, Body(embed=True)],
 ) -> bool:
     result: bool = await subscription_service.add_subscription(user.id, artist_id)
+    return result
+
+
+@router.post("/unsubscribe", tags=["subscription"],
+             description=description_post_unsubscribe, response_model=bool, status_code=200)
+async def unsubscribe_from_artist(
+        user: Annotated[UserReadSchema, Depends(get_current_user)],
+        subscription_service: Annotated[SubscriptionsService, Depends(get_subscription_service)],
+        artist_id: Annotated[int, Body(embed=True)],
+) -> bool:
+    result: bool = await subscription_service.remove_subscription(user.id, artist_id)
     return result

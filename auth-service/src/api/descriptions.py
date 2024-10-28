@@ -91,3 +91,17 @@ description_post_subscribe = """
 - **401 Unauthorized**: If the user is not authenticated or the access token is invalid.
 - **404 Not Found**: If the artist with the provided ID does not exist.
 """
+description_post_unsubscribe = """
+**Description**  
+- Removes an existing subscription for the current user to a specified artist.
+- Uses the current user's ID (retrieved from the access token) and the provided **artist_id** to identify and delete the subscription record.
+- If the user is not subscribed to the specified artist, the request will have no effect, and the response will indicate that no subscription was removed.
+
+**Request Body**  
+- **artist_id**: ID of the artist to unsubscribe from.
+
+**Responses**  
+- **200 OK**: Subscription successfully removed. Returns *True* if a subscription was deleted, *False* if no subscription existed.
+- **401 Unauthorized**: If the user is not authenticated or the access token is invalid.
+- **404 Not Found**: If the artist with the provided ID does not exist.
+"""

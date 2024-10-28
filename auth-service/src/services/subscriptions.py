@@ -14,7 +14,7 @@ class SubscriptionsService:
         self.repo = repo
         self.user_repo = user_repo
 
-    async def add_subscription(self, follower_id: int, artist_id: int):
+    async def add_subscription(self, follower_id: int, artist_id: int) -> bool:
         """
         Adds a subscription between a follower and an artist after validating the artist's existence.
 
@@ -31,11 +31,23 @@ class SubscriptionsService:
         Raises:
             UserNotExistsHTTPException: If the artist user does not exist.
         """
-        logger.warning(f"STARTED add_subscription()")
+        logger.warning(f"STARTED add_subscription({follower_id}, {artist_id})")
         user_artist: list = await self.user_repo.find_all({"id": artist_id})
         if not user_artist:
             raise UserNotExistsHTTPException(f"User with artis_id={artist_id} does not exists")
 
-        result: bool = await self.repo.add_subscription(follower_id, artist_id)
+        result_subscription: bool = await self.repo.add_subscription(follower_id, artist_id)
 
+        if result_subscription:
+            result_1: int = await self.user_repo.change_counter(
+                user_id=artist_id, counter_name="followers_count", number=1)
+            result_2: int = await self.user_repo.change_counter(
+                user_id=follower_id, counter_name="followings_count", number=1)
+            assert result_1 == result_2 == 1
+        return result_subscription
+
+    async def remove_subscription(self, follower_id: int, artist_id: int):
+        logger.warning(f"STARTED remove_subscription({follower_id}, {artist_id})")
+        result: bool = await self.repo.delete_one(
+            {"follower_id": follower_id, "artist_id": artist_id})
         return result
