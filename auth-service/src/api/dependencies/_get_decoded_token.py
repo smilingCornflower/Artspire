@@ -1,5 +1,5 @@
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi import Depends, HTTPException, Cookie, Request
+from fastapi import Depends, HTTPException, Cookie, Request, status
 from utils.jwt_utils import (
     decode_jwt,
     TOKEN_TYPE_FIELD,
