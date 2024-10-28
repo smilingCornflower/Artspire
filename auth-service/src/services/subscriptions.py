@@ -50,4 +50,10 @@ class SubscriptionsService:
         logger.warning(f"STARTED remove_subscription({follower_id}, {artist_id})")
         result: bool = await self.repo.delete_one(
             {"follower_id": follower_id, "artist_id": artist_id})
+        if result:
+            result_1: int = await self.user_repo.change_counter(
+                user_id=artist_id, counter_name="followers_count", number=-1)
+            result_2: int = await self.user_repo.change_counter(
+                user_id=follower_id, counter_name="followings_count", number=-1)
+            assert result_1 == result_2 == 1
         return result
