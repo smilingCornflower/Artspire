@@ -3,7 +3,7 @@ from sqlalchemy.orm import Mapped as M
 from sqlalchemy.orm import mapped_column as mc
 
 from sqlalchemy import (
-    String, ForeignKey, DateTime, func
+    String, ForeignKey, DateTime, func, text
 )
 from sqlalchemy.orm import relationship
 from schemas.users import UserEntity
@@ -25,6 +25,9 @@ class UserOrm(Base):
     is_verified: M[bool] = mc(default=False, nullable=False)
 
     profile_image: M[str] = mc(String(255), nullable=True)
+
+    followers_count: M[int] = mc(server_default=text("0"), nullable=False)
+    followings_count: M[int] = mc(server_default=text("0"), nullable=False)
 
     created_at: M[datetime] = mc(
         DateTime(timezone=True), server_default=func.now(), nullable=False
