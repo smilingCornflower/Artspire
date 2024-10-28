@@ -44,5 +44,7 @@ class UserOrm(Base):
             profile_image=self.profile_image,
             role_id=self.role_id,
             is_active=self.is_active,
+            followers_count=self.followers_count,
+            followings_count=self.followings_count,
         )
         return user_entity

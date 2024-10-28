@@ -32,17 +32,14 @@ class UserEntity(BaseModel):
     is_active: bool
 
 
-class UserProfilePrivate(BaseModel):
-    id: int
-    username: str
-    profile_image: str | None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class UserProfilePublic(BaseModel):
     id: int
     username: str
     profile_image: str | None
-
+    followers: int = 0
+    followings: int = 0
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserProfilePrivate(UserProfilePublic):
+    pass
