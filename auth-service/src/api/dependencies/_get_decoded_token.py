@@ -29,6 +29,7 @@ class CustomHTTPBearer(HTTPBearer):
 
 
 custom_http_bearer = CustomHTTPBearer()
+http_bearer_or_none = CustomHTTPBearer(auto_error=False)
 
 
 def _get_decoded_token(
@@ -62,7 +63,14 @@ def _get_decoded_token(
 def get_decoded_access_token(
         credentials: HTTPAuthorizationCredentials = Depends(custom_http_bearer)
 ) -> dict:
-    logger.debug(f"I am here")
+    return _get_decoded_token(token_type=ACCESS_TOKEN_TYPE, token=credentials.credentials)
+
+
+def get_decoded_access_token_or_none(
+        credentials: HTTPAuthorizationCredentials | None = Depends(http_bearer_or_none)
+) -> dict | None:
+    if credentials is None:
+        return None
     return _get_decoded_token(token_type=ACCESS_TOKEN_TYPE, token=credentials.credentials)
 
 

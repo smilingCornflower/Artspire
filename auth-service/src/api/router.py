@@ -14,10 +14,12 @@ from schemas.tokens import TokenInfoSchema, AccessTokenSchema
 from .dependencies import (
     get_user_service,
     get_current_user,
+    get_current_user_or_none,
     get_decoded_refresh_token,
     get_user_create_data,
     get_user_login_data,
     get_subscription_service,
+
 )
 from .descriptions import (
     description_register,
@@ -87,12 +89,12 @@ async def current_user_info(
             status_code=settings.public_profile_status_code | settings.private_profile_status_code
             )
 async def get_profile_by_username(
-        user: Annotated[UserReadSchema, Depends(get_current_user)],
+        user: Annotated[UserReadSchema, Depends(get_current_user_or_none)],
         username: str,
         user_service: Annotated[UserService, Depends(get_user_service)],
         response: Response,
 ):
-    if user.username == username:
+    if user is not None and user.username == username:
         profile_info = await user_service.get_profile_by_username(username=username, private=True)
         response.status_code = settings.private_profile_status_code
     else:
