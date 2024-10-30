@@ -30,6 +30,8 @@ class Settings(BaseSettings):
         case_sensitive=False,
         env_nested_delimiter="__"
     )
+    mode: str
+
     rmq: RMQConfig
     db_user: str
     db_host: str
