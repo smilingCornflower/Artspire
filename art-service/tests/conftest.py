@@ -39,6 +39,8 @@ def event_loop(request):
 @pytest.fixture(scope="module", autouse=True)
 async def setup_database():
     assert settings.mode == "TEST"
+    assert settings.db.name == "test_db_arts"
+
     logger.warning(f"MODE={settings.mode}")
     async with db_manager.engine.begin() as connection:
         connection: "AsyncEngine"
