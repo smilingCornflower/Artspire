@@ -38,8 +38,8 @@ class UserProfilePublic(BaseModel):
     id: int
     username: str
     profile_image: str | None
-    followers_count: int = 0
-    followings_count: int = 0
+    followers_count: int
+    followings_count: int
     model_config = ConfigDict(from_attributes=True)
 
 
