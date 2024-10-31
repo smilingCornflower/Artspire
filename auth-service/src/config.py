@@ -64,9 +64,6 @@ class Settings(BaseSettings):
         "pk": "pk_%(table_name)s"
     }
 
-    private_profile_status_code: int = 227
-    public_profile_status_code: int = 228
-
 
 settings = Settings()
 

@@ -37,6 +37,14 @@ router = APIRouter(
 )
 
 
+class APIStatuses:
+    private_profile_status_code: int = 227
+    public_profile_status_code: int = 228
+
+
+statuses = APIStatuses()
+
+
 @router.post("/register", tags=["users"],
              response_model=int, description=description_register,
              status_code=status.HTTP_201_CREATED)
@@ -86,7 +94,7 @@ async def current_user_info(
 
 @router.get("/profile", tags=["users"], description=description_profile,
             response_model=UserProfilePublic | UserProfilePrivate,
-            status_code=settings.public_profile_status_code | settings.private_profile_status_code
+            status_code=statuses.public_profile_status_code | statuses.private_profile_status_code
             )
 async def get_profile_by_username(
         user: Annotated[UserReadSchema, Depends(get_current_user_or_none)],
@@ -96,10 +104,10 @@ async def get_profile_by_username(
 ):
     if user is not None and user.username == username:
         profile_info = await user_service.get_profile_by_username(username=username, private=True)
-        response.status_code = settings.private_profile_status_code
+        response.status_code = statuses.private_profile_status_code
     else:
         profile_info = await user_service.get_profile_by_username(username=username)
-        response.status_code = settings.public_profile_status_code
+        response.status_code = statuses.public_profile_status_code
 
     return profile_info
 
