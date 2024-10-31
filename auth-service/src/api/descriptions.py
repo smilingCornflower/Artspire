@@ -103,5 +103,4 @@ description_post_unsubscribe = """
 **Responses**  
 - **200 OK**: Subscription successfully removed. Returns *True* if a subscription was deleted, *False* if no subscription existed.
 - **401 Unauthorized**: If the user is not authenticated or the access token is invalid.
-- **404 Not Found**: If the artist with the provided ID does not exist.
 """
