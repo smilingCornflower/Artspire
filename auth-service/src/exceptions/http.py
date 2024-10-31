@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 
 
-class HTTPStatusesInProject:
+class HTTPExceptionStatusesInProject:
     username_already_exists: int = 452
     email_already_exists: int = 453
     weak_password: int = status.HTTP_400_BAD_REQUEST
@@ -13,7 +13,7 @@ class HTTPStatusesInProject:
     user_not_exists: int = status.HTTP_404_NOT_FOUND
 
 
-statuses = HTTPStatusesInProject()
+statuses = HTTPExceptionStatusesInProject()
 
 
 class UsernameAlreadyExistHTTPException(HTTPException):

@@ -46,7 +46,7 @@ class SubscriptionsService:
             assert result_1 == result_2 == 1
         return result_subscription
 
-    async def remove_subscription(self, follower_id: int, artist_id: int):
+    async def remove_subscription(self, follower_id: int, artist_id: int) -> bool:
         logger.warning(f"STARTED remove_subscription({follower_id}, {artist_id})")
         result: bool = await self.repo.delete_one(
             {"follower_id": follower_id, "artist_id": artist_id})
