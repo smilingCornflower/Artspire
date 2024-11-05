@@ -25,12 +25,14 @@ app = FastAPI(
     lifespan=async_lifespan,
 )
 
+# Allow all hosts with 3000 port
+REGEX_ORIGINS: str = r".*:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:3000$"
 app.add_middleware(
     CORSMiddleware,  # noqa
-    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_origins_regex=REGEX_ALLOWED_ORIGINS,
 )
 
 app.include_router(auth_router)
