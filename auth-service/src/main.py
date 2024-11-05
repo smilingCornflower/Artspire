@@ -26,13 +26,18 @@ app = FastAPI(
 )
 
 # Allow all hosts with 3000 port
-REGEX_ORIGINS: str = r".*:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:3000$"
+origins = [
+    "http://localhost:3000",
+    "https://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://127.0.0.1:3000"
+]
 app.add_middleware(
     CORSMiddleware,  # noqa
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_origins_regex=REGEX_ORIGINS,
 )
 
 app.include_router(auth_router)
