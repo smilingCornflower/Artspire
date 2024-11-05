@@ -32,7 +32,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_origins_regex=REGEX_ALLOWED_ORIGINS,
+    allow_origins_regex=REGEX_ORIGINS,
 )
 
 app.include_router(auth_router)
