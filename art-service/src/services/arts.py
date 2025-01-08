@@ -12,6 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 # Local modules
 from bucket.s3_service import s3_service
 from rabbit.users_client import run_users_client
+from rabbit.similarity_client import run_similarity_client
 from config import logger
 from exceptions.http_exc import (
     ArtNotFoundHTTPException,
@@ -164,14 +165,15 @@ class ArtsGetService(BaseArtsService):
             result: "list[ArtGetResponseShort]" = []
             for entity in arts:
                 entity: "ArtEntity"
-                art_out_short_info: "ArtGetResponseShort" = ArtGetResponseShort.model_validate(entity)
+                art_out_short_info: "ArtGetResponseShort" = ArtGetResponseShort.model_validate(
+                    entity)
                 art_out_short_info.is_liked = art_out_short_info.id in liked_arts
                 result.append(art_out_short_info)
         return result
 
     async def get_arts(
             self,
-            art_id: int | None = None,
+            art_id: list[int] | int | None = None,
             offset: int | None = None,
             limit: int | None = None,
             include_likes_for_user_id: int | None = None,
@@ -183,6 +185,9 @@ class ArtsGetService(BaseArtsService):
         Otherwise, retrieves all arts with optional pagination and tag inclusion.
         If the URLs of the arts are outdated, they are refreshed.
         Optionally retrieves the like status of the arts for a specific user.
+
+        Note: The `art_id` parameter can also accept a list of integers. However, this functionality
+        is intended solely for internal use within the application and is not accessible to the end user.
 
         :param art_id: The ID of a specific art to retrieve, or None to retrieve all arts.
         :param offset: The number of arts to skip for pagination.
@@ -218,9 +223,45 @@ class ArtsGetService(BaseArtsService):
 
         all_arts: list["ArtEntity"] = await self._refresh_arts_url_if_needed(arts=all_arts)
         result: "list[ArtGetResponseShort | ArtGetResponseFull]" = await self._get_prepared_out_arts(
-            arts=all_arts, user_id=include_likes_for_user_id, is_one_art=bool(art_id),
+            arts=all_arts, user_id=include_likes_for_user_id, is_one_art=isinstance(art_id, int),
         )
         logger.info(f"Finished get_arts()")
+        return result
+
+    async def get_similar_arts(self,
+                               art_id: int,
+                               offset: int | None = None,
+                               limit: int | None = None,
+                               include_likes_for_user_id: int | None = None,
+                               ) -> list:
+        """
+        Retrieve a list of arts similar to the specified art.
+
+        This method uses a similarity client to identify arts that are similar to the given `art_id`.
+        If the specified `art_id` is not found in the database, random arts will be selected instead,
+        without applying any similarity algorithms. The response includes optional pagination and
+        the like status for a specific user.
+
+        :param art_id: The ID of the art for which similar arts are being searched.
+        :param offset: The number of arts to skip for pagination. Defaults to None.
+        :param limit: The maximum number of arts to retrieve. Defaults to None.
+        :param include_likes_for_user_id: The ID of the user for whom the like status should be included. Defaults to None.
+        :return: A list of similar arts or random arts if `art_id` is not found.
+        :raises InternalServerErrorHTTPException: If an error occurs while retrieving arts.
+        """
+        logger.info(f"STARTED art_id = {art_id}")
+        similar_art_ids: list[int] = await run_similarity_client(art_id=art_id)
+        if offset is None:
+            offset = 0
+        if limit is None:
+            limit = len(similar_art_ids)
+        similar_art_ids = similar_art_ids[offset:offset+limit]
+
+        logger.debug(f"similar_art_ids = {similar_art_ids}")
+        result: list = await self.get_arts(
+            art_id=similar_art_ids,
+            include_likes_for_user_id=include_likes_for_user_id
+        )
         return result
 
 

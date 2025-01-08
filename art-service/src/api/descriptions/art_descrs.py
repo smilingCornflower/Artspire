@@ -45,8 +45,8 @@ description_delete_art: str = """
 - **art_id**: The ID of the art to delete.
 
 **Returns:**  
-- **200 OK**: `True` if the art was successfully deleted.  
-- **200 OK**: `False` if the art was not found.  
+- **200 OK**: **True** if the art was successfully deleted.  
+- **200 OK**: **False** if the art was not found.  
 - **401 Unauthorized**: If the user is not authenticated. Provide a valid JWT token in headers.  
 - **403 Forbidden**: If the user does not have permission to delete the art.  
 - **500 Internal Server Error**: If an unexpected server error occurs during processing.
@@ -54,4 +54,23 @@ description_delete_art: str = """
 **Authentication and Permissions:**  
 - A regular user can delete only their own art.
 - A moderator or higher permissions are required to delete others' art.
+"""
+
+description_get_similar_arts: str = """
+**Description:**  
+- Retrieve a list of arts similar to a specified art ID using the similarity algorithm.  
+- If the specified **art_id** is not found in the database, random arts will be selected instead, without applying any similarity algorithms.  
+- The like status of the arts is included for the authenticated user if a bearer token is provided. If no token is provided, the like status will always be **False**.
+
+**Parameters:**  
+- **art_id** (required): The ID of the art for which similar arts are being retrieved.  
+- **offset** (optional): The number of similar arts to skip.  
+- **limit** (optional): The maximum number of similar arts to return.  
+
+**Returns:**  
+- **200 OK**: Returns a list of arts similar to the specified art ID, or random arts if **art_id** is not found.  
+- **500 Internal Server Error**: If there is an error during data retrieval or processing.
+
+**Authentication and Permissions:**  
+- A bearer token may be provided to retrieve the like status of the authenticated user. If no token is provided, the like status will always be **False**.
 """

@@ -17,6 +17,7 @@ from api.descriptions.art_descrs import (
     description_get_arts,
     description_post_art,
     description_delete_art,
+    description_get_similar_arts,
 )
 from exceptions.http_exc import ForbiddenHTTPException
 
@@ -50,6 +51,33 @@ async def get_arts(
         include_likes_for_user_id=user_id,
     )
     return one_or_all_arts
+
+
+@router.get(
+    "/similars",
+    description=description_get_similar_arts,
+    tags=["arts"],
+    response_model=list[ArtGetResponseShort]
+)
+async def get_similar_arts(
+        db_gateway: Annotated["DBGateway", Depends(get_db_gateway)],
+        user_data: Annotated["UserEntity", Depends(get_user_data_or_none)],
+        art_id: int | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+) -> list:
+    if user_data:
+        user_id = user_data.id
+    else:
+        user_id = None
+    art_service: "ArtsService" = db_gateway.get_arts_service()
+    similar_arts: list = await art_service.get_similar_arts(
+        art_id=art_id,
+        offset=offset,
+        limit=limit,
+        include_likes_for_user_id=user_id,
+    )
+    return similar_arts
 
 
 @router.post(

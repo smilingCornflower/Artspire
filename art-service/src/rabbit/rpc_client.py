@@ -93,7 +93,6 @@ class RmqRpcClient:
                 routing_key=routing_key,
             )
             response = await self.future
-            logger.debug(f"Received response: {response}")
             return response
         except AMQPException as err:
             logger.error(f"AMQP error during message publish: {err}", exc_info=True)

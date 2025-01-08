@@ -101,4 +101,4 @@ logger.remove()
 logger_format = "<blue>{path:>40}</>::<green>{func:<25}</> || <level>{level:<8}</> || {message}"
 logger.configure(patcher=custom_record)
 
-logger.add(sys.stdout, format=logger_format, colorize=True)
+logger.add(sys.stdout, format=logger_format, colorize=True, level="DEBUG")
