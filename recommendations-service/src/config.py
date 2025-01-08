@@ -45,6 +45,20 @@ class Arts(BaseModel):
     max_tags: int = 20
 
 
+class RMQConfig(BaseModel):
+    user: str
+    password: str
+    host: str
+    port: int = 5672
+    prefetch_count: int = 50
+
+    heartbeat: int = 120
+    timeout_seconds: int = 15
+
+    def get_connection_url(self) -> str:
+        return f"amqp://{self.user}:{self.password}@{self.host}:{self.port}/"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=env_file,
@@ -52,6 +66,7 @@ class Settings(BaseSettings):
         env_nested_delimiter="__",
     )
     db: Database
+    rmq: RMQConfig
     arts: Arts = Arts()
     paths: Paths = Paths()
     redis_ex: RedisExpire = RedisExpire()
