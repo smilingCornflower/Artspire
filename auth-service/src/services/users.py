@@ -21,6 +21,7 @@ from exceptions.http import (
     UnauthorizedHTTPException,
     UserNotActiveHTTPException,
     UserNotFoundHTTPException,
+    UsernameTooLongHTTPException,
 )
 
 
@@ -51,20 +52,26 @@ class UserService:
     def __init__(self, user_repo: UserRepository):
         self.user_repo = user_repo
 
-    async def add_user(self, user_create_data: UserCreateSchema) -> int:
+    async def _validate_username(self, username: str) -> None:
         user_by_username: list[UserEntity] = await self.user_repo.find_all(
-            filter_by={"username": user_create_data.username})
+            filter_by={"username": username})
 
         if user_by_username:
-            logger.warning(f"Username '{user_create_data.username}' already exists.")
+            logger.warning(f"Username '{username}' already exists.")
             raise UsernameAlreadyExistHTTPException
 
+        if len(username) > settings.username_size:
+            raise UsernameTooLongHTTPException
+
+    async def add_user(self, user_create_data: UserCreateSchema) -> int:
         user_by_email = await self.user_repo.find_all(filter_by={"email": user_create_data.email})
+        await self._validate_username(user_create_data.username)
+
         if user_by_email:
             logger.warning(f"Email '{user_create_data.email}' already exists.")
             raise EmailAlreadyExistsHTTPException
 
-        if len(user_create_data.password) < 6:
+        if len(user_create_data.password) < settings.password_size:
             logger.warning("Provided password is too weak.")
             raise WeakPasswordHTTPException
 
@@ -130,10 +137,6 @@ class UserService:
         logger.info(f"Retrieved information for {len(users_info)} users.")
         return users_info
 
-    import logging
-
-    logger = logging.getLogger(__name__)
-
     async def get_profile_by_username(
             self, username: str, private: bool = False
     ) -> "UserProfilePrivate | UserProfilePublic":
@@ -155,3 +158,7 @@ class UserService:
         logger.debug(f"Profile data for user '{username}': {user_profile}")
 
         return user_profile
+
+    async def change_username(self, user_id: int, new_username: str) -> None:
+        await self._validate_username(new_username)
+        await self.user_repo.update_one(model_id=user_id, data={"username": new_username})

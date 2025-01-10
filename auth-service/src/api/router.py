@@ -132,3 +132,12 @@ async def unsubscribe_from_artist(
 ) -> bool:
     result: bool = await subscription_service.remove_subscription(user.id, artist_id)
     return result
+
+
+@router.put("/change-username", tags=["users"], status_code=200)
+async def change_username(
+        user: Annotated[UserReadSchema, Depends(get_current_user)],
+        user_service: Annotated[UserService, Depends(get_user_service)],
+        new_username: str,
+) -> None:
+    await user_service.change_username(user_id=user.id, new_username=new_username)

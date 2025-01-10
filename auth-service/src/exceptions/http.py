@@ -1,8 +1,12 @@
 from fastapi import HTTPException, status
+from config import settings
 
 
 class HTTPExceptionStatusesInProject:
+    MAX_USERNAME_SIZE: int = settings.username_size
+
     username_already_exists: int = 452
+    username_too_long: int = 400
     email_already_exists: int = 453
     weak_password: int = status.HTTP_400_BAD_REQUEST
     inter_server_error: int = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -20,6 +24,12 @@ class UsernameAlreadyExistHTTPException(HTTPException):
     def __init__(self):
         super().__init__(status_code=statuses.username_already_exists,
                          detail="User with this username already exists")
+
+
+class UsernameTooLongHTTPException(HTTPException):
+    def __init__(self):
+        super().__init__(status_code=statuses.username_too_long,
+                         detail=f"Username must not exceed {statuses.MAX_USERNAME_SIZE} characters.")
 
 
 class EmailAlreadyExistsHTTPException(HTTPException):
@@ -77,6 +87,8 @@ class UserNotExistsHTTPException(HTTPException):
         super().__init__(status_code=statuses.user_not_exists,
                          detail=detail)
 
+
 class UserNotFoundHTTPException(HTTPException):
-    def __init__(self, status_code: int = status.HTTP_404_NOT_FOUND, detail: str = "User Not Found"):
+    def __init__(self, status_code: int = status.HTTP_404_NOT_FOUND,
+                 detail: str = "User Not Found"):
         super().__init__(status_code=status_code, detail=detail)

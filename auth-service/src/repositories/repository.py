@@ -92,3 +92,9 @@ class SQLAlchemyRepository(AbstractRepository):
                         f"ROLLBACK: delete_one() affected more than one row for {delete_by}")
                     return False
 
+    async def update_one(self, model_id: int, data: dict) -> None:
+        logger.warning(f"STARTED update_one()")
+        async with db_manager.async_session_maker() as session:
+            async with session.begin():
+                stmt = update(self.model).where(self.model.id == model_id).values(data)
+                await session.execute(stmt)

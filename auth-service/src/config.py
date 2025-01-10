@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     mode: str
 
     rmq: RMQConfig
+
     db_user: str
     db_host: str
     db_port: str
@@ -53,6 +54,9 @@ class Settings(BaseSettings):
     jwt_public_key_path: Path = auth_dir / "secrets/jwt-public.pem"
     jwt_access_token_expire_minutes: int = 5
     jwt_refresh_token_expire_minutes: int = 30 * 24 * 60
+
+    username_size: int = 50
+    password_size: int = 6
 
     logs_path: Path = auth_dir / "logs/debug.log"
 
