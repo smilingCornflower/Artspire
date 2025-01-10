@@ -19,7 +19,6 @@ from .dependencies import (
     get_user_create_data,
     get_user_login_data,
     get_subscription_service,
-
 )
 from .descriptions import (
     description_register,
@@ -29,6 +28,7 @@ from .descriptions import (
     description_profile,
     description_post_subscribe,
     description_post_unsubscribe,
+    description_change_username,
 )
 from typing import Annotated
 
@@ -134,10 +134,16 @@ async def unsubscribe_from_artist(
     return result
 
 
-@router.put("/change-username", tags=["users"], status_code=200)
+@router.put("/change-username", tags=["users"], description=description_change_username,
+            response_model=AccessTokenSchema, status_code=200)
 async def change_username(
         user: Annotated[UserReadSchema, Depends(get_current_user)],
         user_service: Annotated[UserService, Depends(get_user_service)],
         new_username: str,
-) -> None:
+) -> AccessTokenSchema:
     await user_service.change_username(user_id=user.id, new_username=new_username)
+    new_access_token: TokenInfoSchema = await user_service.create_token_for_user_by_id(
+        user_id=user.id,
+    )
+    access_token: AccessTokenSchema = AccessTokenSchema.model_validate(new_access_token)
+    return access_token

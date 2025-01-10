@@ -6,7 +6,8 @@ class HTTPExceptionStatusesInProject:
     MAX_USERNAME_SIZE: int = settings.username_size
 
     username_already_exists: int = 452
-    username_too_long: int = 400
+    username_too_long: int = 455
+
     email_already_exists: int = 453
     weak_password: int = status.HTTP_400_BAD_REQUEST
     inter_server_error: int = status.HTTP_500_INTERNAL_SERVER_ERROR
