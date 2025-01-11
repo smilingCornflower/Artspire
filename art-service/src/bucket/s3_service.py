@@ -55,7 +55,7 @@ class S3Service(S3Client):
 
         try:
             image: "ImageFile" = Image.open(image_file)
-            if image.mode == 'RGBA':
+            if image.mode != 'RGB':
                 image: "Image" = image.convert('RGB')
 
             output: "BytesIO" = io.BytesIO()
