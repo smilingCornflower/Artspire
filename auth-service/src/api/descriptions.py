@@ -11,8 +11,9 @@ description_register: str = """
 
 **Responses**  
 - **201 Created**: Successful registration. Returns the ID of the newly created user.
-- **452 **: If the username already in use.
-- **453 **: If the email already in use.
+- **452 UsernameAlreadyExists**: If the username already in use.
+- **453 EmailAlreadyExists**: If the email already in use.
+- **455 Username Too Long**: If the username exceeds the allowed length (50).
 - **400 Bad Request**: If the password is too weak.
 - **422 Unprocessable Entity**: If an username or an email in wrong format.
 """
@@ -103,4 +104,21 @@ description_post_unsubscribe = """
 **Responses**  
 - **200 OK**: Subscription successfully removed. Returns *True* if a subscription was deleted, *False* if no subscription existed.
 - **401 Unauthorized**: If the user is not authenticated or the access token is invalid.
+"""
+
+description_change_username: str = """
+**Description**  
+- Changes the username of the currently authenticated user.  
+- Requires a valid Bearer token for authentication.  
+- Validates the new username to ensure it is unique and not excessively long.  
+- If validation passes, updates the username and issues a new access token.
+
+**Request Body**  
+- **new_username**: The desired new username for the authenticated user.
+
+**Responses**  
+- **200 OK**: Successfully changed the username. Returns a new access token.  
+- **452 Username Already Exists**: If the new username is already in use.  
+- **455 Username Too Long**: If the new username exceeds the allowed length (50).  
+- **401 Unauthorized**: If the Bearer token is invalid, expired, or missing.
 """
