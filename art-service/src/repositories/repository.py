@@ -5,12 +5,13 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 # SQLAlchemy
-from sqlalchemy import insert, select, update, delete, and_
+from sqlalchemy import insert, select, update, delete, and_, text
 from sqlalchemy.orm import joinedload
 
 # Local
 from config import logger
 from schemas.base import BaseEntity
+from exceptions.http_exc import InvalidRandomSeedHTTPException
 
 # Type hints
 if TYPE_CHECKING:
@@ -78,6 +79,7 @@ class SQLAlchemyRepository(AbstractRepository):
         offset: int = None,
         limit: int = None,
         joined_attributes: list[str] = None,
+        random_seed: float = None,
     ) -> "list[BaseEntity]":
         logger.warning("STARTED find_all()")
 
@@ -99,6 +101,14 @@ class SQLAlchemyRepository(AbstractRepository):
             stmt = stmt.where(and_(*conditions))
 
         logger.debug(f"stmt: \n{stmt}")
+        if random_seed:
+            if not (-1 <= random_seed <= 1):
+                raise InvalidRandomSeedHTTPException()
+            logger.debug(f"random_seed = {random_seed}")
+            setseed_stmt = text("SELECT setseed(:seed)")
+            await self._session.execute(setseed_stmt, {"seed": random_seed})
+            stmt = stmt.order_by(text("RANDOM()"))
+
         result: "Result" = await self._session.execute(stmt)
         rows = result.unique().scalars()
         entities: "list[BaseEntity]" = [row.to_entity() for row in rows]

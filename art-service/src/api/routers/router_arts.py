@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Annotated
 
-from fastapi import Depends, Body
+from fastapi import Depends, Body, Query
 
 from .router import router
 from schemas.arts import ArtPostSchema, ArtEntity, ArtGetResponseFull, ArtGetResponseShort
@@ -38,6 +38,8 @@ async def get_arts(
         art_id: int | None = None,
         offset: int | None = None,
         limit: int | None = None,
+        random_seed: Annotated[float, Query(
+            ge=-1.0, le=1.0, description="Random seed must be between -1.0 and 1.0")] = None
 ) -> list:
     if user_data:
         user_id = user_data.id
@@ -49,6 +51,7 @@ async def get_arts(
         offset=offset,
         limit=limit,
         include_likes_for_user_id=user_id,
+        random_seed=random_seed,
     )
     return one_or_all_arts
 

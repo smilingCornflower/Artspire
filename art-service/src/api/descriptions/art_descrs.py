@@ -8,10 +8,12 @@ description_get_arts: str = """
 - **art_id** (optional): The ID of the art entity to retrieve. If not provided, a list of arts will be returned.  
 - **offset** (optional): The number of arts to skip, for pagination.  
 - **limit** (optional): The maximum number of arts to return.  
+- **random_seed** (optional): A value in the range -1.0 ≤ x ≤ 1.0 to set the random seed for reproducibility. Raises a 400 status code if the input is outside this range.
 
 **Returns:**  
 - **200 OK**: Returns a list of art entities or a single art, including any refreshed URLs and optional like status (if authenticated).  
 - **404 Not Found**: If no arts are found.  
+- **400 Bad Request**: If the random_seed value is outside the allowed range (-1.0 to 1.0).  
 - **500 Internal Server Error**: If there is an error during data retrieval or processing.
 
 **Authentication and Permissions:**  

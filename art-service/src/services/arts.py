@@ -177,6 +177,7 @@ class ArtsGetService(BaseArtsService):
             offset: int | None = None,
             limit: int | None = None,
             include_likes_for_user_id: int | None = None,
+            random_seed: float | None = None,
     ) -> list:
         """
         Retrieve arts from the database with optional filtering, pagination, and additional options.
@@ -193,9 +194,12 @@ class ArtsGetService(BaseArtsService):
         :param offset: The number of arts to skip for pagination.
         :param limit: The maximum number of arts to retrieve.
         :param include_tags: Whether to include associated tags for each art.
+        :param random_seed: An optional seed to ensure reproducibility of randomness when selecting random arts.
+
         :return: A list of art schemas, either in short or full format depending on the request.
         :raises ArtNotFoundHTTPException: If no arts are found.
         :raises InternalServerErrorHTTPException: If an error occurs in the database operation.
+        :raises InvalidRandomSeedHTTPException: If the random seed value is outside.
         """
         logger.warning(f"Started get_arts()")
         try:
@@ -210,7 +214,9 @@ class ArtsGetService(BaseArtsService):
                 filter_by=filter_condition,
                 offset=offset,
                 limit=limit,
-                joined_attributes=art_attributes)
+                joined_attributes=art_attributes,
+                random_seed=random_seed,
+            )
             if not all_arts:
                 raise ArtNotFoundHTTPException(detail="No art found")
         except SQLAlchemyError as err:
@@ -246,6 +252,7 @@ class ArtsGetService(BaseArtsService):
         :param offset: The number of arts to skip for pagination. Defaults to None.
         :param limit: The maximum number of arts to retrieve. Defaults to None.
         :param include_likes_for_user_id: The ID of the user for whom the like status should be included. Defaults to None.
+
         :return: A list of similar arts or random arts if `art_id` is not found.
         :raises InternalServerErrorHTTPException: If an error occurs while retrieving arts.
         """
@@ -255,7 +262,7 @@ class ArtsGetService(BaseArtsService):
             offset = 0
         if limit is None:
             limit = len(similar_art_ids)
-        similar_art_ids = similar_art_ids[offset:offset+limit]
+        similar_art_ids = similar_art_ids[offset:offset + limit]
 
         logger.debug(f"similar_art_ids = {similar_art_ids}")
         result: list = await self.get_arts(

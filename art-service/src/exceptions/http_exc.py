@@ -71,3 +71,11 @@ class CommentLengthHTTPException(HTTPException):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=detail,
         )
+
+
+class InvalidRandomSeedHTTPException(HTTPException):
+    def __init__(self, detail: str = "Random seed must be float and between -1.0 and 1.0"):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=detail,
+        )
