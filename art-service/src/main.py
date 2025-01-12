@@ -5,12 +5,15 @@ from fastapi.responses import RedirectResponse
 from api.routers.router import router as arts_router
 from fastapi.middleware.cors import CORSMiddleware
 from config import logger
+from rabbit.s3_server import s3_server
+import asyncio
 
 
 @asynccontextmanager
-async def async_lifespan(app: FastAPI):
+async def async_lifespan(app_: FastAPI):
+    app_.s3_server_task = asyncio.create_task(s3_server())
     yield
-
+    app_.s3_server_task.cancel()
 
 app = FastAPI(
     title="Artspire-Arts",

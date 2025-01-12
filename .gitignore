@@ -5,6 +5,9 @@ settings.json
 
 logs/
 secrets
+secret
+.env
+openai.env
 
 .gitignore
 *.log
@@ -15,14 +18,19 @@ jwt-private.pem
 jwt-public.pem
 bucket-credentials.json
 
+
 venv
 .venv
+images/
 tempo.py
 my_actions.txt
 tasks.py
 rows_count.py
 commands.txt
-images/
+uploaded_images.json
+data.json
+Dockerfile
+requirements.txt
 
 foo.py
 bar.py

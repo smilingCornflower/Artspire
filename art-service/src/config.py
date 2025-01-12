@@ -52,6 +52,7 @@ class RMQConfig(BaseModel):
     password: str
     prefetch_count: int = 50
     timeout_seconds: int = 10
+    heartbeat: int = 120
 
     def get_connection_url(self) -> str:
         return f"amqp://{self.user}:{self.password}@{self.host}:{self.port}/"
@@ -72,6 +73,14 @@ class Server(BaseModel):
     arts_port: int
 
 
+class ProjectStatusCodes:
+    success: int = 1000
+    json_decode_error: int = 1001
+    img_invalid_type_error: int = 1002
+    os_error: int = 1003
+    google_cloud_error: int = 1004
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=env_file,
@@ -85,6 +94,7 @@ class Settings(BaseSettings):
     server: Server
     s3: BucketConfig = BucketConfig()
     log: LoggingConfig = LoggingConfig()
+    project_statuses: ProjectStatusCodes = ProjectStatusCodes()
 
 
 settings = Settings()
