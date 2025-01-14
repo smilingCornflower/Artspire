@@ -1,24 +1,22 @@
 from typing import TYPE_CHECKING
+
 from fastapi import Depends
 
-from repositories.arts import ArtRepository
-from repositories.tags import TagRepository
-from repositories.users_to_saves import UsersToSavesRepository
-from repositories.users_to_likes import UsersToLikesRepository
-from repositories.comments import CommentsRepository
-from repositories.art_to_tag import ArtToTagRepository
-
-from services.arts import ArtsService
-from services.tags import TagsService
-from services.users_to_saves import UsersToSavesService
-from services.users_to_likes import UsersToLikesService
-from services.comments import CommentsService
-
 from database.db import db_manager
+from repositories.art_to_tag import ArtToTagRepository
+from repositories.arts import ArtRepository
+from repositories.comments import CommentsRepository
+from repositories.tags import TagRepository
+from repositories.users_to_likes import UsersToLikesRepository
+from repositories.users_to_saves import UsersToSavesRepository
+from services.arts import ArtsService
+from services.comments import CommentsService
+from services.tags import TagsService
+from services.users_to_likes import UsersToLikesService
+from services.users_to_saves import UsersToSavesService
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
-    from typing import AsyncGenerator
 
 
 async def get_session() -> "AsyncSession":

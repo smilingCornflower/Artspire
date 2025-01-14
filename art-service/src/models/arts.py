@@ -1,23 +1,15 @@
-from sqlalchemy.orm import Mapped as M
-from sqlalchemy.orm import mapped_column as mc
-from sqlalchemy.orm import relationship
-from sqlalchemy import (
-    String,
-    ForeignKey,
-    Integer,
-    DateTime,
-    func,
-    text,
-)
-from sqlalchemy.exc import MissingGreenlet
-from database.base import Base
 from datetime import datetime
-from schemas.arts import ArtEntity
-from config import logger
 from typing import TYPE_CHECKING
 
+from sqlalchemy import (DateTime, func, String, text)
+from sqlalchemy.exc import MissingGreenlet
+from sqlalchemy.orm import Mapped as M, mapped_column as mc, relationship
+
+from database.base import Base
+from schemas.arts import ArtEntity
+
 if TYPE_CHECKING:
-    from .tags import TagOrm
+    pass
 
 
 class ArtOrm(Base):

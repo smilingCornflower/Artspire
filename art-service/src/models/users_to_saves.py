@@ -1,7 +1,6 @@
-from sqlalchemy.orm import Mapped as M
-from sqlalchemy.orm import mapped_column as mc
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped as M, mapped_column as mc, relationship
+
 from database.base import Base
 from schemas.user_to_saves import UsersToSavesEntity
 

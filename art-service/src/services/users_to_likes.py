@@ -1,8 +1,9 @@
 from typing import TYPE_CHECKING
-from exceptions.http_exc import ArtNotFoundHTTPException, InternalServerErrorHTTPException
 
 from sqlalchemy.exc import SQLAlchemyError
+
 from config import logger
+from exceptions.http_exc import ArtNotFoundHTTPException, InternalServerErrorHTTPException
 from schemas.user_to_likes import UsersToLikesCreateDTO
 
 if TYPE_CHECKING:

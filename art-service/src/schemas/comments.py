@@ -1,6 +1,8 @@
-from schemas.base import BaseEntity
-from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
+
+from schemas.base import BaseEntity
 
 
 class CommentEntity(BaseEntity):

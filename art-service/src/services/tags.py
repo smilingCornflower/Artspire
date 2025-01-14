@@ -1,13 +1,12 @@
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from repositories.tags import TagRepository
+from config import logger
 from exceptions.http_exc import (
     InternalServerErrorHTTPException,
     TagAlreadyExistsHTTPException,
 )
-from schemas.tags import TagEntity, TagCreateDTO
-from config import logger
+from repositories.tags import TagRepository
+from schemas.tags import TagCreateDTO, TagEntity
 
 
 class TagsService:

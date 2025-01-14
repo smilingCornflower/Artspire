@@ -1,11 +1,10 @@
-import logging
 from typing import Annotated, TYPE_CHECKING
 
 from fastapi import Depends, Query, UploadFile
-from ._get_user_data import get_user_data
 
-from schemas.arts import ArtPostSchema
 from config import logger
+from schemas.arts import ArtPostSchema
+from ._get_user_data import get_user_data
 
 if TYPE_CHECKING:
     from schemas.user import UserEntity

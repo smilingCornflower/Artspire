@@ -1,23 +1,20 @@
+from typing import TYPE_CHECKING
+
 import asyncio
 import uuid
-
 from aio_pika import connect, Message
 from aio_pika.exceptions import AMQPException
-from abc import ABC
 
-import config
-from config import settings, logger
-from typing import TYPE_CHECKING
+from config import logger, settings
 
 if TYPE_CHECKING:
     from aio_pika.abc import (
         AbstractQueue,
         AbstractChannel,
-        AbstractExchange,
         AbstractConnection,
         AbstractIncomingMessage
     )
-    from typing import MutableMapping, Self, Any
+    from typing import Self, Any
 
 
 class RmqRpcClient:

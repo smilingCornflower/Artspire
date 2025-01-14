@@ -1,18 +1,15 @@
-from typing import TYPE_CHECKING
-from fastapi import Depends, Body
+from typing import Annotated, TYPE_CHECKING
+
+from fastapi import Body, Depends
 
 from api.dependencies import get_db_gateway, get_user_data
 from api.dependencies.get_services import DBGateway
-from api.descriptions.tag_descrs import (
-    description_post_tag,
-    description_delete_tag,
-    description_search_tag,
-)
+from api.descriptions.tag_descrs import (description_delete_tag, description_post_tag,
+                                         description_search_tag)
 from api.routers.router import router
 from exceptions.http_exc import ForbiddenHTTPException
-from schemas.user import UserEntity
 from schemas.tags import TagEntity
-from typing import Annotated
+from schemas.user import UserEntity
 
 if TYPE_CHECKING:
     from services.tags import TagsService

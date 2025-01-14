@@ -1,9 +1,7 @@
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from config import settings, logger
-
 # Annotation
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncEngine, create_async_engine
+
+from config import settings
 
 
 class DatabaseManager:

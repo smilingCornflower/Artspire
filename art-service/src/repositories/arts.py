@@ -33,5 +33,5 @@ class ArtRepository(SQLAlchemyRepository):
         else:
             raise ValueError(f"Invalid counter name: {counter_name}")
         async with self.transaction():
-            result: "Result" = await self._session.execute(stmt)
+            result: "ø" = await self._session.execute(stmt)
         return result.rowcount

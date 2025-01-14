@@ -1,21 +1,17 @@
 from typing import Annotated, TYPE_CHECKING
 
-from fastapi import Depends, Body
+from fastapi import Body, Depends
 
-from api.dependencies import get_user_data, get_db_gateway
+from api.dependencies import get_db_gateway, get_user_data
 from api.dependencies.get_services import DBGateway
-from api.descriptions.user_save_descrs import (
-    description_get_user_saves,
-    description_post_user_save,
-    description_delete_user_save,
-)
-from api.descriptions.user_like_descrs import (
-    description_post_user_like,
-    description_delete_user_like,
-)
+from api.descriptions.user_like_descrs import (description_delete_user_like,
+                                               description_post_user_like)
+from api.descriptions.user_save_descrs import (description_delete_user_save,
+                                               description_get_user_saves,
+                                               description_post_user_save)
 from api.routers.router import router
-from schemas.user import UserEntity
 from schemas.arts import ArtEntity
+from schemas.user import UserEntity
 
 if TYPE_CHECKING:
     from services.users_to_likes import UsersToLikesService

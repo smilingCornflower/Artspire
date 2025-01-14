@@ -1,6 +1,7 @@
-from .rpc_client import run_rpc_client, RmqRpcClient
 import json
+
 from config import logger
+from .rpc_client import run_rpc_client
 
 SIMILARITY_REQUEST: str = "similarity_request"
 

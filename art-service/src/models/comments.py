@@ -1,10 +1,10 @@
-from sqlalchemy.orm import Mapped as M
-from sqlalchemy.orm import mapped_column as mc
-from sqlalchemy import ForeignKey, String, DateTime, func
-from database.base import Base
-
-from schemas.comments import CommentEntity
 from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey, func, String
+from sqlalchemy.orm import Mapped as M, mapped_column as mc
+
+from database.base import Base
+from schemas.comments import CommentEntity
 
 
 class CommentOrm(Base):

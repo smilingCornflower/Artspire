@@ -16,7 +16,22 @@ if TYPE_CHECKING:
 
 
 class RmqRpcServer:
+    """
+    A base class for creating an asynchronous RabbitMQ RPC server using aio-pika.
+
+    Provides:
+      - Automatic connection setup and retry logic.
+      - Queue declaration for listening to incoming RPC requests.
+      - A message-processing loop that reads from the queue, invokes `msg_handler`,
+        and responds to the `reply_to` queue.
+    """
     def __init__(self, queue_name: str):
+        """
+        Sets the queue name to consume messages from.
+
+        :param queue_name: The RabbitMQ queue that this server will consume.
+        :type queue_name: str
+        """
         self.queue_name: str = queue_name
         self.connection: "AbstractConnection" = None
         self.channel: "AbstractChannel" = None
@@ -24,14 +39,17 @@ class RmqRpcServer:
         self.queue: "AbstractQueue" = None
 
     async def connect(self):
+        """
+        Establishes an asynchronous connection to RabbitMQ, declares a channel and
+        the specified queue, and binds them. Retries on connection failure.
+        """
         while True:
             try:
                 self.connection = await connect(
                     url=settings.rmq.get_connection_url(),
                     client_properties={
                         "heartbeat": settings.rmq.heartbeat,
-                        "expiration": str(settings.rmq.timeout_seconds * 1000)
-                    }
+                        "expiration": str(settings.rmq.timeout_seconds * 1000)}
                 )
                 self.channel = await self.connection.channel()
                 self.exchange = self.channel.default_exchange
@@ -42,9 +60,24 @@ class RmqRpcServer:
                 await asyncio.sleep(5)
 
     async def msg_handler(self, message_body: str) -> str:
+        """
+        Default handler for incoming messages. Subclasses should override this method
+        to process messages and return an appropriate response.
+
+        :param message_body: The body of the message, decoded into a string.
+        :return: A response to be sent back to the message sender.
+        """
         return message_body
 
     async def process_messages(self):
+        """
+        Consumes messages from the queue and processes them in a loop. Each message is:
+          - Decoded into a string.
+          - Handled by `msg_handler`.
+          - Replied to via the `reply_to` property in the original message.
+
+        Cleans up the connection if an error occurs or the loop ends.
+        """
         try:
             async with self.queue.iterator() as q_iterator:
                 async for message in q_iterator:
@@ -78,3 +111,13 @@ class RmqRpcServer:
         if self.connection:
             await self.connection.close()
             logger.info("Connection closed.")
+
+    async def __aenter__(self) -> "Self":
+        await self.connect()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await s3_rpc_server.cleanup()
+        if exc_type:
+            logger.critical(f"Unexpected error occurred: {e}")
+            return False

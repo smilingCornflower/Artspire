@@ -79,6 +79,7 @@ class ProjectStatusCodes:
     img_invalid_type_error: int = 1002
     os_error: int = 1003
     google_cloud_error: int = 1004
+    validation_error: int = 1005
 
 
 class Settings(BaseSettings):
@@ -108,7 +109,7 @@ def custom_record(record):
 
 logger.remove()
 
-logger_format = "<blue>{path:>40}</>::<green>{func:<25}</> || <level>{level:<8}</> || {message}"
+logger_format = "<blue>{path:>40}</>::<green>{func:<40}</> || <level>{level:<8}</> || {message}"
 logger.configure(patcher=custom_record)
 
 logger.add(sys.stdout, format=logger_format, colorize=True, level="DEBUG")

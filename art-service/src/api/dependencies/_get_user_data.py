@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING
-from fastapi import Depends, status, HTTPException, Request
+
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security.http import HTTPBearer
-from rabbit.jwt_client import run_jwt_client
-from config import logger
+
 from exceptions.http_exc import UnauthorizedHTTPException
+from rabbit.jwt_client import run_jwt_client
 from schemas.user import UserEntity
 
 if TYPE_CHECKING:

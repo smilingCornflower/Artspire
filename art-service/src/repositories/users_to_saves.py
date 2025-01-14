@@ -1,11 +1,10 @@
 from typing import TYPE_CHECKING
-from .repository import SQLAlchemyRepository
+
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from models.users_to_saves import UsersToSavesOrm
-from database.db import db_manager
 
 from config import logger
+from models.users_to_saves import UsersToSavesOrm
+from .repository import SQLAlchemyRepository
 
 if TYPE_CHECKING:
     from sqlalchemy.dialects.postgresql import Insert

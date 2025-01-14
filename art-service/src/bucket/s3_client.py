@@ -1,11 +1,12 @@
 import os
+from datetime import timedelta
 from typing import TYPE_CHECKING
 
 from google.cloud.exceptions import GoogleCloudError
 from google.cloud.storage import Client
 
-from config import settings, logger
-from datetime import timedelta
+from config import logger, settings
+
 if TYPE_CHECKING:
     from google.cloud.storage.bucket import Bucket
     from google.cloud.storage.blob import Blob
@@ -15,9 +16,7 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(settings.s3.credentials_path)
 
 
 class S3Client:
-    def __init__(self,
-                 bucket_name: str,
-                 ):
+    def __init__(self, bucket_name: str):
         self.client: Client = Client()
         logger.info("bucket Client initialized")
         try:
@@ -26,10 +25,7 @@ class S3Client:
             logger.critical(f"Error during connection to bucket. Error: {err}")
             raise err
 
-    def upload_file(self,
-                    file_obj: "BinaryIO",
-                    blob_name: str,
-                    ) -> str:
+    def upload_file(self, file_obj: "BinaryIO", blob_name: str) -> str:
         """
         Upload a file to bucket and return the blob's name.
 
@@ -41,7 +37,6 @@ class S3Client:
         try:
             blob: "Blob" = self.bucket.blob(blob_name=blob_name)
             logger.debug(f"blob: {blob}")
-            logger.debug(f"file_obj: {file_obj}")
             blob.upload_from_file(file_obj=file_obj, rewind=True)
             logger.info(f"Finished uploading file into bucket")
             return blob.name

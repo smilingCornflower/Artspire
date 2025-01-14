@@ -1,7 +1,8 @@
-from .rpc_client import run_rpc_client
 import json
+
 from config import logger
 from exceptions.http_exc import InternalServerErrorHTTPException
+from .rpc_client import run_rpc_client
 
 JWT_REQUEST: str = "jwt_request"
 

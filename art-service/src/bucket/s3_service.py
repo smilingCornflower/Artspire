@@ -1,19 +1,18 @@
-from .s3_client import S3Client
-from fastapi import UploadFile
-from exceptions.http_exc import (
-    InvalidImageTypeHTTPException,
-    InternalServerErrorHTTPException,
-)
 import io
-from typing import TYPE_CHECKING
-from google.cloud.exceptions import GoogleCloudError
-from config import logger, settings
 from typing import BinaryIO, TYPE_CHECKING
+
 import shortuuid
+from fastapi import UploadFile
+from google.cloud.exceptions import GoogleCloudError
 from PIL import Image
 
+from config import logger, settings
+from exceptions.http_exc import (InternalServerErrorHTTPException, InvalidImageTypeHTTPException)
+from .s3_client import S3Client
+
+
 if TYPE_CHECKING:
-    from PIL import ImageFile, Image
+    from PIL import ImageFile
     from io import BytesIO
 
 

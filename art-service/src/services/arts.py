@@ -1,37 +1,30 @@
 # Standard libraries
-from abc import ABC, abstractmethod
-from datetime import datetime, timezone, timedelta
-import uuid
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 # External libraries
-import shortuuid
 from google.cloud.exceptions import GoogleCloudError
 from sqlalchemy.exc import SQLAlchemyError
 
 # Local modules
 from bucket.s3_service import s3_service
-from rabbit.users_client import run_users_client
-from rabbit.similarity_client import run_similarity_client
 from config import logger
 from exceptions.http_exc import (
     ArtNotFoundHTTPException,
     InternalServerErrorHTTPException,
 )
-
-from schemas.arts import (
-    ArtCreateDTO, ArtPostSchema, ArtEntity, ArtGetResponseShort, ArtGetResponseFull
-)
+from rabbit.similarity_client import run_similarity_client
+from rabbit.users_client import run_users_client
+from schemas.arts import (ArtCreateDTO, ArtEntity, ArtGetResponseFull, ArtGetResponseShort,
+                          ArtPostSchema)
 
 if TYPE_CHECKING:
-    from fastapi import UploadFile
     from repositories.arts import ArtRepository
     from repositories.art_to_tag import ArtToTagRepository
     from repositories.tags import TagRepository
     from repositories.users_to_likes import UsersToLikesRepository
     from schemas.user import UserEntity
     from schemas.user_to_likes import UsersToLikesEntity
-    from schemas.tags import TagEntity
 
 
 class BaseArtsService:

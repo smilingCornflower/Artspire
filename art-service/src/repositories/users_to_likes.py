@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING
-from .repository import SQLAlchemyRepository
+
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy import Result
-from models.users_to_likes import UsersToLikesOrm
 
 from config import logger
+from models.users_to_likes import UsersToLikesOrm
+from .repository import SQLAlchemyRepository
 
 if TYPE_CHECKING:
     from sqlalchemy.dialects.postgresql import Insert

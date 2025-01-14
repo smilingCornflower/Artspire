@@ -1,5 +1,5 @@
-from sqlalchemy import Table, Column, Integer, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, ForeignKey, Integer, Table
+
 from database.base import Base
 
 art_to_tag = Table(

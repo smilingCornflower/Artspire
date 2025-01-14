@@ -1,15 +1,13 @@
 from typing import Annotated, TYPE_CHECKING
+
 from fastapi import Depends
 
-from .router import router
-from api.dependencies import get_user_data, get_db_gateway
+from api.dependencies import get_db_gateway, get_user_data
 from api.dependencies.get_services import DBGateway
-from api.descriptions.comment_descr import (
-    description_post_comment,
-    description_get_comments,
-)
-from schemas.comments import CommentUploadSchema, CommentCreateSchema, CommentOutSchema
+from api.descriptions.comment_descr import (description_get_comments, description_post_comment)
+from schemas.comments import CommentCreateSchema, CommentOutSchema, CommentUploadSchema
 from schemas.user import UserEntity
+from .router import router
 
 if TYPE_CHECKING:
     from services.comments import CommentsService

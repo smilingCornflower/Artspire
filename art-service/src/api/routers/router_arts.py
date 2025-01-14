@@ -1,25 +1,15 @@
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated, TYPE_CHECKING
 
-from fastapi import Depends, Body, Query
+from fastapi import Body, Depends, Query
 
-from .router import router
-from schemas.arts import ArtPostSchema, ArtEntity, ArtGetResponseFull, ArtGetResponseShort
-from schemas.user import UserEntity
-
-from api.dependencies import (
-    get_art_post_schema,
-    get_user_data,
-    get_user_data_or_none,
-    get_db_gateway
-
-)
-from api.descriptions.art_descrs import (
-    description_get_arts,
-    description_post_art,
-    description_delete_art,
-    description_get_similar_arts,
-)
+from api.dependencies import (get_art_post_schema, get_db_gateway, get_user_data,
+                              get_user_data_or_none)
+from api.descriptions.art_descrs import (description_delete_art, description_get_arts,
+                                         description_get_similar_arts, description_post_art)
 from exceptions.http_exc import ForbiddenHTTPException
+from schemas.arts import ArtEntity, ArtGetResponseFull, ArtGetResponseShort, ArtPostSchema
+from schemas.user import UserEntity
+from .router import router
 
 if TYPE_CHECKING:
     from services.arts import ArtsService

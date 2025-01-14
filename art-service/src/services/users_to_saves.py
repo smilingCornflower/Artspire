@@ -1,15 +1,14 @@
 from typing import TYPE_CHECKING
-from exceptions.http_exc import ArtNotFoundHTTPException, InternalServerErrorHTTPException
 
 from sqlalchemy.exc import SQLAlchemyError
+
 from config import logger
+from exceptions.http_exc import ArtNotFoundHTTPException, InternalServerErrorHTTPException
 from schemas.user_to_saves import UsersToSavesCreateDTO
 
 if TYPE_CHECKING:
     from repositories.users_to_saves import UsersToSavesRepository
     from repositories.arts import ArtRepository
-    from repositories.tags import TagRepository
-    from repositories.art_to_tag import ArtToTagRepository
     from schemas.user_to_saves import UsersToSavesEntity
     from schemas.arts import ArtEntity
 

@@ -1,17 +1,13 @@
-from repositories.comments import CommentsRepository
+from sqlalchemy.exc import SQLAlchemyError
+
+from config import logger
+from exceptions.http_exc import (ArtNotFoundHTTPException, CommentLengthHTTPException,
+                                 InternalServerErrorHTTPException)
+from rabbit.users_client import run_users_client
 from repositories.arts import ArtRepository
+from repositories.comments import CommentsRepository
 from schemas.comments import CommentCreateSchema, CommentEntity, CommentOutSchema
 from schemas.user import UserEntity
-from sqlalchemy.exc import SQLAlchemyError
-from config import logger
-from rabbit.users_client import run_users_client
-
-
-from exceptions.http_exc import (
-    InternalServerErrorHTTPException,
-    ArtNotFoundHTTPException,
-    CommentLengthHTTPException,
-)
 
 
 class CommentsService:

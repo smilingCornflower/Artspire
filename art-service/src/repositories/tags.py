@@ -1,9 +1,11 @@
-from .repository import SQLAlchemyRepository
-from models.tags import TagOrm
 from typing import TYPE_CHECKING
-from config import logger
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as psql_insert
+
+from config import logger
+from models.tags import TagOrm
+from .repository import SQLAlchemyRepository
 
 if TYPE_CHECKING:
     from sqlalchemy import Select, Result
