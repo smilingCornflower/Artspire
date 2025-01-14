@@ -1,36 +1,42 @@
+# IDE and environment-related files
 .idea
 __pycache__/
 .DS_Store
-settings.json
-
-logs/
-secrets
-secret
-.env
-openai.env
-
-.gitignore
-*.log
-*.yaml
-*.yml
-*.pem
-jwt-private.pem
-jwt-public.pem
-bucket-credentials.json
-
-
 venv
 .venv
-images/
+
+# Configuration and secrets
+settings.json
+.env
+openai.env
+secrets
+secret
+bucket-credentials.json
+jwt-private.pem
+jwt-public.pem
+
+# Logs and temporary files
+logs/
+*.log
 tempo.py
-my_actions.txt
-tasks.py
-rows_count.py
-commands.txt
 uploaded_images.json
+images/
+rows_count.py
+tasks.py
+my_actions.txt
+commands.txt
 data.json
+
+# Docker and dependencies
 Dockerfile
 requirements.txt
 
+# YAML files
+*.yaml
+*.yml
+
+# Python
+image_uploader.py
 foo.py
 bar.py
+data/
