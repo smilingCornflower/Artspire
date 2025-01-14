@@ -1,27 +1,29 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import EmailStr
+
+from .base_ import CustomBaseModel
 
 
-class UserCreateSchema(BaseModel):
+class UserCreateSchema(CustomBaseModel):
     username: str
     email: EmailStr
     password: str
 
 
-class UserLoginSchema(BaseModel):
+class UserLoginSchema(CustomBaseModel):
     username: str
     password: str
 
 
-class UserReadSchema(BaseModel):
+class UserReadSchema(CustomBaseModel):
     id: int
     username: str
     email: EmailStr
     profile_image: str | None
 
 
-class UserEntity(BaseModel):
+class UserEntity(CustomBaseModel):
     id: int
     username: str
     hashed_password: str
@@ -34,13 +36,12 @@ class UserEntity(BaseModel):
     followings_count: int
 
 
-class UserProfilePublic(BaseModel):
+class UserProfilePublic(CustomBaseModel):
     id: int
     username: str
     profile_image: str | None
     followers_count: int
     followings_count: int
-    model_config = ConfigDict(from_attributes=True)
 
 
 class UserProfilePrivate(UserProfilePublic):

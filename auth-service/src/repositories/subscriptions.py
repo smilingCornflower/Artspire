@@ -1,9 +1,11 @@
 from typing import TYPE_CHECKING
-from .repository import SQLAlchemyRepository
-from models.subscriptions import SubscriptionOrm
-from database.db import db_manager
-from config import logger
+
 from sqlalchemy.dialects.postgresql import insert as p_insert
+
+from config import logger
+from database.db import db_manager
+from models.subscriptions import SubscriptionOrm
+from .repository import SQLAlchemyRepository
 
 if TYPE_CHECKING:
     from sqlalchemy.dialects.postgresql import Insert as PInsert

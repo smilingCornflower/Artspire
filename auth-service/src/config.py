@@ -68,6 +68,9 @@ class Settings(BaseSettings):
         "pk": "pk_%(table_name)s"
     }
 
+    rpc_status_success: int = 1000
+    rpc_status_img_invalid_type_error: int = 1002
+
 
 settings = Settings()
 

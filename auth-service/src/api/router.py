@@ -1,36 +1,21 @@
-from fastapi import APIRouter, Depends, status, Response, Body
-from schemas.users import (
-    UserCreateSchema,
-    UserLoginSchema,
-    UserReadSchema,
-)
-from services.users import UserService
-from services.subscriptions import SubscriptionsService
-from config import logger, settings
-from utils.set_httponly import set_refresh_in_httponly
-from services.users import UserService
-from schemas.users import UserProfilePrivate, UserProfilePublic
-from schemas.tokens import TokenInfoSchema, AccessTokenSchema
-from .dependencies import (
-    get_user_service,
-    get_current_user,
-    get_current_user_or_none,
-    get_decoded_refresh_token,
-    get_user_create_data,
-    get_user_login_data,
-    get_subscription_service,
-)
-from .descriptions import (
-    description_register,
-    description_login,
-    description_refresh,
-    description_me,
-    description_profile,
-    description_post_subscribe,
-    description_post_unsubscribe,
-    description_change_username,
-)
 from typing import Annotated
+
+from fastapi import APIRouter, Body, Depends, Response, status, UploadFile
+
+from config import logger
+from schemas.tokens import AccessTokenSchema, TokenInfoSchema
+from schemas.users import UserCreateSchema, UserLoginSchema, UserProfilePrivate, UserProfilePublic, \
+    UserReadSchema
+from services.subscriptions import SubscriptionsService
+from services.users import UserService
+from .dependencies import (get_current_user, get_current_user_or_none, get_decoded_refresh_token,
+                           get_subscription_service, get_user_create_data, get_user_login_data,
+                           get_user_service)
+from .descriptions import (
+    description_change_username, description_get_profile_picture,
+    description_login, description_me, description_post_profile_picture,
+    description_post_subscribe, description_post_unsubscribe,
+    description_profile, description_refresh, description_register)
 
 router = APIRouter(
     prefix="/users",
@@ -147,3 +132,25 @@ async def change_username(
     )
     access_token: AccessTokenSchema = AccessTokenSchema.model_validate(new_access_token)
     return access_token
+
+
+@router.post("/profile-picture", tags=["users"], description=description_post_profile_picture,
+             status_code=201)
+async def set_profile_picture(
+        user: Annotated[UserReadSchema, Depends(get_current_user)],
+        user_service: Annotated[UserService, Depends(get_user_service)],
+        profile_picture: UploadFile,
+) -> None:
+    user_id: int = user.id
+    await user_service.set_profile_picture(user_id=user_id, image=profile_picture)
+
+
+@router.get("/profile-picture", tags=["users"], description=description_get_profile_picture,
+            status_code=200)
+async def get_profile_picture(
+        user_id: int,
+        user_service: Annotated[UserService, Depends(get_user_service)],
+
+) -> str:
+    profile_picture_url: str = await user_service.get_profile_picture(user_id=user_id)
+    return profile_picture_url

@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
-from sqlalchemy import insert, select, delete, update, and_
-from database.db import db_manager
-from config import settings, logger
 
 # Annotation
-from sqlalchemy import Select, Insert, Delete, ChunkedIteratorResult, Result
+from sqlalchemy import and_, ChunkedIteratorResult, delete, Delete, insert, Insert, Result, select, \
+    Select, update
 from sqlalchemy.sql.expression import BinaryExpression
-from sqlalchemy.orm import DeclarativeMeta
+
+from config import logger
+from database.db import db_manager
 
 
 class AbstractRepository(ABC):
@@ -21,7 +21,6 @@ class AbstractRepository(ABC):
     @abstractmethod
     async def delete_one(self, delete_by):
         raise NotImplementedError
-
 
 
 class SQLAlchemyRepository(AbstractRepository):

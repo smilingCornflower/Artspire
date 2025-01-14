@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from .base_ import CustomBaseModel
 
 
-class AccessTokenSchema(BaseModel):
+class AccessTokenSchema(CustomBaseModel):
     access_token: str
     token_type: str = "Bearer"
 

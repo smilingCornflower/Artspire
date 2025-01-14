@@ -122,3 +122,30 @@ description_change_username: str = """
 - **455 Username Too Long**: If the new username exceeds the allowed length (50).  
 - **401 Unauthorized**: If the Bearer token is invalid, expired, or missing.
 """
+description_post_profile_picture: str = """
+**Description**  
+- Accepts an uploaded image file as the new profile picture for the authenticated user.
+
+**Request Form**  
+- **profile_picture**: The uploaded file (image) to set as the new profile picture.
+
+**Request Header**  
+- **Authorization**: Bearer token for authentication.
+
+**Responses**  
+- **201 Created**: Successfully updated the profile picture.
+- **401 Unauthorized**: If the Bearer token is invalid, expired, or missing.
+- **422 Unprocessable Entity**: If the uploaded file is invalid (not a jpg, png, webp).
+"""
+description_get_profile_picture: str = """
+**Description**  
+- Retrieves the URL of the user's profile picture by their user ID.
+
+**Request Query**  
+- **user_id**: The ID of the user whose profile picture is requested.
+
+**Responses**  
+- **200 OK**: Successfully returns the profile picture URL as a string.
+- **401 Unauthorized**: If the request is made without proper authentication or an invalid token.
+- **404 Not Found**: If the specified user does not exist in the database.
+"""

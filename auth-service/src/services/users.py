@@ -1,28 +1,21 @@
+import base64
+
+from fastapi import Response, UploadFile
+
+from config import logger, settings
+from exceptions.http import (EmailAlreadyExistsHTTPException, UnauthorizedHTTPException,
+                             UsernameAlreadyExistHTTPException, UsernameTooLongHTTPException,
+                             UserNotActiveHTTPException, UserNotFoundHTTPException,
+                             WeakPasswordHTTPException)
+from rabbit.s3_client import run_s3_add_client, run_s3_get_client
 from repositories.users import UserRepository
-from config import settings, logger
-from fastapi import Response
-from schemas.users import (
-    UserCreateSchema,
-    UserLoginSchema,
-    UserEntity,
-    UserReadSchema,
-    UserProfilePrivate,
-    UserProfilePublic
-)
-from schemas.tokens import TokenInfoSchema, AccessTokenSchema
-from utils.password import hash_password, check_password
+from schemas.rabbit_ import S3AddSchema, S3GetSchema
+from schemas.tokens import AccessTokenSchema, TokenInfoSchema
+from schemas.users import (UserCreateSchema, UserEntity, UserLoginSchema, UserProfilePrivate,
+                           UserProfilePublic)
 from utils.jwt_utils import create_access_jwt, create_refresh_jwt
+from utils.password import check_password, hash_password
 from utils.set_httponly import set_refresh_in_httponly
-from sqlalchemy.exc import SQLAlchemyError
-from exceptions.http import (
-    UsernameAlreadyExistHTTPException,
-    EmailAlreadyExistsHTTPException,
-    WeakPasswordHTTPException,
-    UnauthorizedHTTPException,
-    UserNotActiveHTTPException,
-    UserNotFoundHTTPException,
-    UsernameTooLongHTTPException,
-)
 
 
 def create_token_for_user(user: UserEntity, include_refresh: bool = True) -> TokenInfoSchema:
@@ -137,9 +130,8 @@ class UserService:
         logger.info(f"Retrieved information for {len(users_info)} users.")
         return users_info
 
-    async def get_profile_by_username(
-            self, username: str, private: bool = False
-    ) -> "UserProfilePrivate | UserProfilePublic":
+    async def get_profile_by_username(self, username: str,
+                                      private: bool = False) -> "UserProfilePrivate | UserProfilePublic":
         logger.info(f"Retrieving profile for username: {username}, private view: {private}")
 
         result_users: list[UserEntity] = await self.user_repo.find_all({"username": username})
@@ -162,3 +154,65 @@ class UserService:
     async def change_username(self, user_id: int, new_username: str) -> None:
         await self._validate_username(new_username)
         await self.user_repo.update_one(model_id=user_id, data={"username": new_username})
+
+    async def set_profile_picture(self, user_id: int, image: UploadFile) -> None:
+        """
+        Sets or updates the user's profile picture.
+
+        Steps:
+        1. Reads the uploaded file as bytes.
+        2. Base64-encodes the image data.
+        3. Constructs an S3AddSchema object containing the encoded image, MIME type, and blob name.
+        4. Calls run_s3_add_client(...) to store the image in external storage.
+        5. Updates the user's profile in the repository with the resulting blob name.
+
+        :param user_id: The ID of the user whose profile picture is being updated.
+        :param image: The uploaded file containing the user's new profile picture.
+        :raises InterServerHTTPException: If the storage operation fails or returns a non-successful status.
+        Note: The InternalServerException might be raised by the run_s3_add_client function, not directly by set_profile_picture.
+        """
+        img_bytes: bytes = await image.read()
+        img_type: str = image.content_type
+        logger.debug(f"img_type: {img_type}")
+
+        img_base64: bytes = base64.b64encode(img_bytes)
+        img_base64: str = img_base64.decode("utf-8")
+
+        img_blob_name: str = f"profile_pictures/user_{user_id}.jpg"
+        logger.debug(f"img_blob_name: {img_blob_name}")
+
+        img_add_data = S3AddSchema(img_base64=img_base64,
+                                   img_type=img_type,
+                                   blob_name=img_blob_name)
+
+        img_blob_name: str = await run_s3_add_client(body=img_add_data)
+        await self.user_repo.update_one(model_id=user_id, data={"profile_image": img_blob_name})
+
+    async def get_profile_picture(self, user_id: int) -> str:
+        """
+        Retrieves the URL for a user's profile picture by their ID.
+
+        Steps:
+          1. Looks up the user in the repository based on the provided `user_id`.
+          2. Extracts the `profile_image` field (blob name) from the user's record if found.
+          3. Constructs an `S3GetSchema` object and invokes `run_s3_get_client` to get the image URL.
+          4. Returns the obtained URL as a string.
+
+        :param user_id: int — The ID of the user whose profile picture is being retrieved.
+        :return: str — A string containing the URL of the user's profile picture.
+        :raises UserNotFoundHTTPException: If no user with the specified `user_id` exists in the database.
+        """
+        user_by_id: list[UserEntity] = await self.user_repo.find_all({"id": user_id})
+        if user_by_id:
+            user_entity: UserEntity = user_by_id[0]
+            img_blob_name: str = user_entity.profile_image
+            logger.debug(f"img_blob_name = {img_blob_name}")
+        else:
+            logger.critical(f"User with id = {user_id} not found in the database")
+            raise UserNotFoundHTTPException
+
+        msg_body = S3GetSchema(blob_name=img_blob_name)
+        logger.info(f"msg_body = {msg_body}")
+
+        img_url: str = await run_s3_get_client(body=msg_body)
+        return img_url

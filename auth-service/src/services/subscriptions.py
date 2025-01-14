@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
-from exceptions.http import FailedToSubscribeHTTPException
+
 from config import logger
-from sqlalchemy.exc import IntegrityError
 from exceptions.http import UserNotExistsHTTPException
 
 if TYPE_CHECKING:

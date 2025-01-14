@@ -45,7 +45,7 @@ class WeakPasswordHTTPException(HTTPException):
                          detail=detail)
 
 
-class InterServerHTTPException(HTTPException):
+class InternalServerHTTPException(HTTPException):
     def __init__(self):
         super().__init__(status_code=statuses.inter_server_error,
                          detail="Something went wrong on server")
@@ -93,3 +93,11 @@ class UserNotFoundHTTPException(HTTPException):
     def __init__(self, status_code: int = status.HTTP_404_NOT_FOUND,
                  detail: str = "User Not Found"):
         super().__init__(status_code=status_code, detail=detail)
+
+
+class InvalidImageTypeHTTPException(HTTPException):
+    def __init__(self, detail: str = "Invalid image type provided"):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=detail,
+        )
