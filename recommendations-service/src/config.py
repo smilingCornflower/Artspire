@@ -71,6 +71,8 @@ class Settings(BaseSettings):
     paths: Paths = Paths()
     redis_ex: RedisExpire = RedisExpire()
 
+    update_password: str
+
 
 settings = Settings()
 

@@ -1,13 +1,16 @@
-import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
-from scipy.sparse import csr_matrix, load_npz
-from config import settings, logger
 import pickle
-from red import r
+
+import numpy as np
+from scipy.sparse import csr_matrix, load_npz
+from sklearn.metrics.pairwise import cosine_similarity
+
+from config import logger, settings
 from exceptions import ArtNotFoundException
+from red import r
+from utils.data_processor import update_arts_matrix
 
 
-def update_similarity_arts_matrix():
+def get_sim_from_arts_matrix():
     matrix: csr_matrix = load_npz(settings.paths.arts_csr)
     similarity_matrix: np.ndarray = cosine_similarity(matrix)
     np.save(settings.paths.arts_sim_matrix, similarity_matrix)
@@ -36,3 +39,12 @@ def get_similar_arts(art_id: int):
     r.rpush(redis_key_name, *result)
     r.expire(redis_key_name, settings.redis_ex.art_ids)
     return result
+
+
+async def update_similarity_matrix():
+    logger.warning(f"working on forming arts matrix ...")
+    await update_arts_matrix()
+    logger.warning("arts_matrix is ready")
+    logger.warning("working on calculation similarity matrix ...")
+    get_sim_from_arts_matrix()
+    logger.info("FINISHED update_similarity_matrix.py")

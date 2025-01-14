@@ -1,31 +1,35 @@
 import asyncio
-import redis
+from contextlib import asynccontextmanager
 
-import numpy as np
-from scipy.sparse import load_npz, csr_matrix
-from sklearn.metrics.pairwise import cosine_similarity
-from utils.data_processor import update_arts_matrix
-from rec import get_similar_arts, update_similarity_arts_matrix
+import uvicorn
+from fastapi import FastAPI
+
 from config import settings, logger
 from rabbit.similarity_server import similarity_server
-from contextlib import asynccontextmanager
+from rec import update_similarity_matrix
 
 
 @asynccontextmanager
-async def similarity_lifespan():
-    similarity_task = asyncio.create_task(similarity_server())
-    try:
-        yield
-    finally:
-        similarity_task.cancel()
-        await asyncio.gather(similarity_task, return_exceptions=True)
+async def async_lifespan(app_name: FastAPI):
+    app.task = asyncio.create_task(similarity_server())
+    yield
+    app.task.cancel()
 
 
-async def main():
-    async with similarity_lifespan():
-        while True:
-            await asyncio.sleep(1)  # Замените на вашу логику
+app = FastAPI(
+    title="Artspire-Recommendations",
+    lifespan=async_lifespan,
+)
+
+
+@app.post("/update-similarity-matrix")
+async def update_sim(key_word: str):
+    if key_word == settings.update_password:
+        logger.info("password is correct")
+        await update_similarity_matrix()
+    else:
+        logger.info("password is incorrect")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    uvicorn.run(app=app, port=8002, host="0.0.0.0")
